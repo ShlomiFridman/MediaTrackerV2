@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Shlomi\\source\\repos\\MediaTracker\\MediaTracker\\MediaTracker.csproj",
+      "projectUniqueName": "C:\\Users\\Shlomi\\Documents\\GitHub\\MediaTrackerV2\\MediaTracker\\MediaTracker.csproj",
       "projectName": "MediaTracker",
-      "projectPath": "C:\\Users\\Shlomi\\source\\repos\\MediaTracker\\MediaTracker\\MediaTracker.csproj",
+      "projectPath": "C:\\Users\\Shlomi\\Documents\\GitHub\\MediaTrackerV2\\MediaTracker\\MediaTracker.csproj",
       "packagesPath": "C:\\Users\\Shlomi\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Shlomi\\source\\repos\\MediaTracker\\MediaTracker\\obj\\",
+      "outputPath": "C:\\Users\\Shlomi\\Documents\\GitHub\\MediaTrackerV2\\MediaTracker\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Shlomi\\AppData\\Roaming\\NuGet\\NuGet.Config",

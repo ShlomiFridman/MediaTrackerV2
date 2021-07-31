@@ -35,7 +35,7 @@ namespace MediaTracker
             }
         }
 
-        public TrackTree(TrackTree parent, BinaryReader reader)
+        private TrackTree(TrackTree parent, BinaryReader reader)
         {
             this.Parent = parent;
             // write this name
@@ -52,19 +52,33 @@ namespace MediaTracker
             }
         }
 
-        #region openFunctions
-
-        public void open()
+        public TrackTree search(string path)
         {
-            Process.Start("explorer.exe", this.Path);
+            if (this.Path.Equals(path))
+                return this;
+            else if (!IsDirectory)
+                return null;
+            TrackTree next = null;
+            foreach (var child in Childrens)
+            {
+                next = child.search(path);
+                if (next != null)
+                    return next;
+            }
+            return next;
         }
 
-        public void openParent()
+        public string getCurrent()
         {
-            Process.Start("explorer.exe", this.Parent.Path);
-        }
+            if (!IsDirectory)
+                return this.Path;
+            string current = this.Childrens.Find((child) =>
+            {
+                return this.Tracker.Current == child.Path;
+            }).getCurrent();
 
-        #endregion
+            return current.Equals("EMPTY") ? this.Path : current;
+        }
 
         #region save
 

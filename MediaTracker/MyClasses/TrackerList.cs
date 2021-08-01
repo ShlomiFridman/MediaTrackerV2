@@ -12,7 +12,11 @@ namespace MediaTracker
         public List<FileInfo> FilesInfo { get; }    // public fileInfo list
         public DirectoryInfo Info { get; }
         public bool IsEmpty { get { return index == -1; } }
-        public string Current { get { return (index != -1) ? files[index] : "EMPTY"; } }
+        public string Current { set
+            {
+                this.index = files.IndexOf(value);
+            }
+            get { return (index != -1) ? files[index] : "NONE"; } }
 
         #region constructors
 
@@ -28,6 +32,9 @@ namespace MediaTracker
             // if there are no valid files, index is -1
             if (this.files.Count == 0)
                 this.index = -1;
+            // fix the paths
+            for (int i = 0; i < files.Count; i++)
+                files[i] = Utilties.fixPath(files[i]);
             // initialize FilesInfo list
             this.FilesInfo = new List<FileInfo>();
             foreach (string path in files)

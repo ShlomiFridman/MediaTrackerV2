@@ -16,7 +16,7 @@ namespace MediaTracker
         public string Name { private set; get; }
         public string Path { private set; get; }
 
-        public bool IsDirectory { get { return Tracker != null; } }
+        public bool IsDirectory { private set; get; }
         public bool IsEmpty { get { return Tracker != null && Tracker.IsEmpty; } }
 
 
@@ -25,7 +25,9 @@ namespace MediaTracker
             this.Parent = parent;
             this.Name = name;
             this.Path = (parent!=null)? $"{parent.Path}/{Name}":Name;
+            this.Path = Utilties.fixPath(this.Path);
             this.Childrens = new List<TrackTree>(); // initalize children list
+            this.IsDirectory = File.GetAttributes(this.Path).HasFlag(FileAttributes.Directory);
             // if directory initialize FilesList and children trees
             if (IsDirectory)
             {
@@ -41,9 +43,11 @@ namespace MediaTracker
             // write this name
             this.Name = reader.ReadString();
             this.Path = (parent != null) ? $"{parent.Path}/{Name}" : Name;
+            this.Path = Utilties.fixPath(this.Path);
             this.Childrens = new List<TrackTree>(); // initalize children list
+            this.IsDirectory = reader.ReadBoolean();
             // if directory reads true, initialize children and tracker
-            if (reader.ReadBoolean())
+            if (IsDirectory)
             {
                 this.Tracker = new TrackerList(Path,reader.ReadString());
                 int count = reader.ReadInt32();
@@ -56,7 +60,7 @@ namespace MediaTracker
         {
             if (this.Path.Equals(path))
                 return this;
-            else if (!IsDirectory)
+            else if (!IsDirectory || !path.Contains(this.Path))
                 return null;
             TrackTree next = null;
             foreach (var child in Childrens)
@@ -80,12 +84,41 @@ namespace MediaTracker
             return current.Equals("EMPTY") ? this.Path : current;
         }
 
+        public TrackTree getCurrentTree()
+        {
+            if (!IsDirectory || this.IsEmpty)
+                return this;
+            var current = this.Childrens.Find((child) =>
+            {
+                return this.Tracker.Current == child.Path;
+            });
+            return current == null ? this : current.getCurrentTree();
+        }
+
+        public bool setPathTo(TrackTree dest)
+        {
+            if (dest == this)
+                return true;
+            else if (!IsDirectory)
+                return false;
+            foreach (var child in Childrens)
+            {
+                if (child.setPathTo(dest))
+                {
+                    this.Tracker.Current = child.Path;
+                    return true;
+                }
+            }
+            return false;
+        }
+
         #region save
 
-        public bool save()
+        public bool save(string path)
         {
-            BinaryWriter writer = new BinaryWriter(File.Open("./TrackerTree.dat", FileMode.OpenOrCreate));
+            BinaryWriter writer = new BinaryWriter(File.Open(path, FileMode.OpenOrCreate));
             bool flag = this.save(writer);
+            writer.Flush();
             writer.Close();
             return flag;
         }
@@ -113,12 +146,12 @@ namespace MediaTracker
 
         #region staticLoad
 
-        public static TrackTree load()
+        public static TrackTree load(string path)
         {
             BinaryReader reader;
             try
             {
-                reader = new BinaryReader(File.Open("./TrackerTree.dat", FileMode.Open));
+                reader = new BinaryReader(File.Open(path, FileMode.Open));
             } catch (Exception e)
             {
                 return null;

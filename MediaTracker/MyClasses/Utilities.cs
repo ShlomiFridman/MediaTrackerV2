@@ -64,16 +64,20 @@ namespace MediaTracker
         /// <returns>List of strings</returns>
         public static List<string> getDirectoriesAbove(string path, double size)
         {
-            // if path is not a directory, throws exception
-            if (!Directory.Exists(path))
-                throw new DirectoryNotFoundException();
-            // get all sub directories in directory
-            var files = new List<string>(Directory.GetDirectories(path));
-            // remove all directories below the size given
-            files.RemoveAll((path) =>
+            var files = new List<string>();
+            try
             {
-                return (Utilties.getSize(path) / Math.Pow(10, 6)) < size;
-            });
+                // if path is not a directory, throws exception
+                if (!Directory.Exists(path))
+                    throw new DirectoryNotFoundException();
+                // get all sub directories in directory
+                files = new List<string>(Directory.GetDirectories(path));
+                // remove all directories below the size given
+                files.RemoveAll((path) =>
+                {
+                    return (Utilties.getSize(path) / Math.Pow(10, 6)) < size;
+                });
+            } catch (Exception e) {}
             // return valid directories
             return files;
         }
@@ -97,6 +101,11 @@ namespace MediaTracker
             });
             // returning result
             return files;
+        }
+
+        public static string fixPath(string path)
+        {
+            return path.Replace('/', '\\');
         }
 
     }

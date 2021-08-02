@@ -13,7 +13,7 @@ namespace MediaTracker
         /// </summary>
         /// <param name="path"></param>
         /// <returns>long value that is the size in bytes</returns>
-        public static long getSize(string path)
+        public static double getSize(string path)
         {
             // if path does not exists, return 0
             if (!Directory.Exists(path) && !File.Exists(path))
@@ -23,9 +23,12 @@ namespace MediaTracker
             // if directory calculate all its files sizes
             if (fileInfo.Attributes.HasFlag(FileAttributes.Directory))
             {
-                long sum = 0;
+                double sum = 0;
                 // get each file size, and add to sum
                 foreach (string subPath in Directory.GetFiles(path))
+                    sum += getSize(subPath);
+                // get each directory size, and add to sum
+                foreach (string subPath in Directory.GetDirectories(path))
                     sum += getSize(subPath);
                 return sum;
             }
@@ -52,6 +55,10 @@ namespace MediaTracker
             {
                 return (Utilties.getSize(path) / Math.Pow(10, 6)) < size;
             });
+            for (int ind = 0; ind < files.Count; ind++)
+            {
+                files[ind] = Utilties.fixPath(files[ind]);
+            }
             // return valid files
             return files;
         }
@@ -77,6 +84,10 @@ namespace MediaTracker
                 {
                     return (Utilties.getSize(path) / Math.Pow(10, 6)) < size;
                 });
+                for (int ind = 0; ind < files.Count; ind++)
+                {
+                    files[ind] = Utilties.fixPath(files[ind]);
+                }
             } catch (Exception e) {}
             // return valid directories
             return files;
@@ -103,9 +114,30 @@ namespace MediaTracker
             return files;
         }
 
+        /// <summary>
+        /// return the path string with all '/' replaced with '\'
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string fixPath(string path)
         {
             return path.Replace('/', '\\');
+        }
+
+        /// <summary>
+        /// return the name of the file in given path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>string</returns>
+        public static string getName(string path)
+        {
+            try
+            {
+                return new FileInfo(path).Name;
+            } catch(Exception ex)
+            {
+                return path;
+            }
         }
 
     }

@@ -5,12 +5,16 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Win32Resource />
+    <StartupObject></StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="assets\images\drive.png" />
     <None Remove="assets\images\file.png" />
     <None Remove="assets\images\folder.png" />
+    <None Remove="assets\images\icon.ico" />
     <None Remove="assets\images\icon.png" />
   </ItemGroup>
 
@@ -27,7 +31,7 @@
     <Resource Include="assets\images\drive.png" />
     <Resource Include="assets\images\file.png" />
     <Resource Include="assets\images\folder.png" />
-    <Resource Include="assets\images\icon.png" />
+    <Resource Include="assets\images\icon.ico" />
   </ItemGroup>
 
   <ItemGroup>

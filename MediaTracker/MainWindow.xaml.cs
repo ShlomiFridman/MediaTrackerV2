@@ -58,7 +58,6 @@ namespace MediaTracker
         {
             // init dialog
             var dialog = new FolderBrowserDialog();
-            string path = "";
             // if selected folder set path
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 setRoot(dialog.SelectedPath);
@@ -167,6 +166,151 @@ namespace MediaTracker
             this.selectFolder(tvi.Tag.ToString());
             // return head to tail
             this.keyQueue.Enqueue(tvi);
+        }
+
+        #endregion
+
+        #region control buttons events
+
+        /// <summary>
+        /// moves the tracker's offset in ether in the selected file's folder's folder
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ButtonClick_ChangeFolder(object sender, RoutedEventArgs e)
+        {
+            // if trackTree or selectedFile is null, do nothing
+            if (this.trackTree == null || this.selectedFile == null)
+                return;
+            // check if the folder need updating
+            // if 2 layers up is the root, update file's folder
+            if (this.selectedFile.Parent.Parent != this.trackTree)
+                this.selectedFile.Parent.Parent.checkChildren();
+            // else update the root
+            else
+                this.selectedFile.Parent.checkChildren();
+            var btn = (Button)sender;
+            bool atBounds = false;
+            // called by nextFolder button, offset +1
+            if (btn.Name.Equals(this.NextFolderBtn.Name))
+            {
+                // if the selected file is not 2 layers under root, change the tracker 2 layers up tracker
+                if (this.selectedFile.Parent.Parent != this.trackTree)
+                    atBounds = moveTracker(this.selectedFile.Parent.Parent, 1);
+                // if the selected file is 2 layers under root, change the file's folder's tracker
+                else
+                    atBounds = moveTracker(this.selectedFile.Parent, 1);
+            }
+            // called by previousFolder button, offset -1
+            else if (btn.Name.Equals(this.PreviousFolderBtn.Name))
+            {
+                // if the selected file is not 2 layers under root, change the tracker 2 layers up tracker
+                if (this.selectedFile.Parent.Parent != this.trackTree)
+                    atBounds = moveTracker(this.selectedFile.Parent.Parent, -1);
+                // if the selected file is 2 layers under root, change the file's folder's tracker
+                else
+                    atBounds = moveTracker(this.selectedFile.Parent, -1);
+            }
+            // if not at bounds, update selected file, and folder
+            if (!atBounds)
+            {
+                // update selected file
+                this.selectedFile = this.selectedFile.Parent.Parent.getSelectedTree();
+                // set the textBox texts
+                this.updateText();
+            }
+        }
+
+        /// <summary>
+        /// moves the tracker's offset in ether in the selected file's folder
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ButtonClick_ChangeFile(object sender, RoutedEventArgs e)
+        {
+            // if trackTree or selectedFile is null, do nothing
+            if (this.trackTree == null || this.selectedFile == null)
+                return;
+            // check if the folder need updating
+            this.selectedFile.Parent.checkChildren();
+            var btn = (Button)sender;
+            bool atBounds = false;
+            // called by nextFile button, offset +1
+            if (btn.Name.Equals(this.NextFileBtn.Name))
+            {
+                atBounds = moveTracker(this.selectedFile.Parent, 1);
+            }
+            // called by next5File button, offset +5
+            else if (btn.Name.Equals(this.Next5FileBtn.Name))
+            {
+                atBounds = moveTracker(this.selectedFile.Parent, 5);
+            }
+            // called by previousFile button, offset -1
+            else if (btn.Name.Equals(this.PreviousFileBtn.Name))
+            {
+                atBounds = moveTracker(this.selectedFile.Parent, -1);
+            }
+            // called by previous5File button,, offset -5
+            else if (btn.Name.Equals(this.Previous5FileBtn.Name))
+            {
+                atBounds = moveTracker(this.selectedFile.Parent, -5);
+            }
+            // if not at bounds, update selected file, and folder
+            if (!atBounds)
+            {
+                // update selected file
+                this.selectedFile = this.selectedFile.Parent.getSelectedTree();
+                // set the textBox texts
+                this.updateText();
+            }
+        }
+
+        /// <summary>
+        /// get a random file from the currently selected folder
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void GenRandomBtn_Click(object sender, RoutedEventArgs e)
+        {
+            // if the trackTree isn't initialize, do nothing
+            if (this.trackTree == null)
+                return;
+            this.randomFile = this.selectedFolder.getRandom();
+            this.RandomText.Text = this.randomFile.Name;
+        }
+
+        /// <summary>
+        /// Open file method, can be called by openFile, openFolder, openRandom buttons
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ButtonClick_open(object sender, RoutedEventArgs e)
+        {
+            // if the trackTree isn't initialize, do nothing
+            if (this.trackTree == null)
+                return;
+            // if attenpt to open failed, do nothing
+            try
+            {
+                // if the sender is the openFile button, open the file and advance tracker to next file
+                if (sender == this.OpenFileBtn)
+                {
+                    Process.Start("explorer.exe", selectedFile.Path);
+                    this.ButtonClick_ChangeFile(this.NextFileBtn, null);
+                }
+                // else if it was the openFolder button, open the file's folder (parent tree path)
+                else if (sender == this.OpenFolderBtn)
+                    Process.Start("explorer.exe", selectedFile.Parent.Path);
+                // else if it is openRandom, will open randomFile path
+                else if (this.randomFile != null && sender == this.OpenRandomBtn)
+                    Process.Start("explorer.exe", randomFile.Path);
+            }
+            catch (Exception exception)
+            {
+                // if an exception was thrown, check if the tree is up to date
+                this.trackTree.checkTree();
+                selectFolder(this.trackTree.Path);
+            }
         }
 
         #endregion
@@ -323,143 +467,6 @@ namespace MediaTracker
                 return true;
             // save
             return this.trackTree.save($"{this.trackTree.Path}/tracker.dat");
-        }
-
-        #endregion
-
-        #region control buttons events
-
-        /// <summary>
-        /// moves the tracker's offset in ether in the selected file's folder's folder
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ButtonClick_ChangeFolder(object sender, RoutedEventArgs e)
-        {
-            // if selectedFile is null, do nothing
-            if (this.selectedFile == null)
-                return;
-            // check if the folder need updating
-            // if 2 layers up is the root, update file's folder
-            if (this.selectedFile.Parent.Parent != this.trackTree)
-                this.selectedFile.Parent.Parent.checkChildren();
-            // else update the root
-            else
-                this.selectedFile.Parent.checkChildren();
-            var btn = (Button)sender;
-            bool atBounds = false;
-            // called by nextFolder button, offset +1
-            if (btn.Name.Equals(this.NextFolderBtn.Name))
-            {
-                // if the selected file is not 2 layers under root, change the tracker 2 layers up tracker
-                if (this.selectedFile.Parent.Parent != this.trackTree)
-                    atBounds = moveTracker(this.selectedFile.Parent.Parent, 1);
-                // if the selected file is 2 layers under root, change the file's folder's tracker
-                else
-                    atBounds = moveTracker(this.selectedFile.Parent, 1);
-            }
-            // called by previousFolder button, offset -1
-            else if (btn.Name.Equals(this.PreviousFolderBtn.Name))
-            {
-                // if the selected file is not 2 layers under root, change the tracker 2 layers up tracker
-                if (this.selectedFile.Parent.Parent != this.trackTree)
-                    atBounds = moveTracker(this.selectedFile.Parent.Parent, -1);
-                // if the selected file is 2 layers under root, change the file's folder's tracker
-                else
-                    atBounds = moveTracker(this.selectedFile.Parent, -1);
-            }
-            // if not at bounds, update selected file, and folder
-            if (!atBounds)
-            {
-                // update selected file
-                this.selectedFile = this.selectedFile.Parent.Parent.getSelectedTree();
-                // set the textBox texts
-                this.updateText();
-            }
-        }
-
-        /// <summary>
-        /// moves the tracker's offset in ether in the selected file's folder
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ButtonClick_ChangeFile(object sender, RoutedEventArgs e)
-        {
-            // if selectedFile is null, do nothing
-            if (this.selectedFile == null)
-                return;
-            // check if the folder need updating
-            this.selectedFile.Parent.checkChildren();
-            var btn = (Button)sender;
-            bool atBounds = false;
-            // called by nextFile button, offset +1
-            if (btn.Name.Equals(this.NextFileBtn.Name))
-            {
-                atBounds = moveTracker(this.selectedFile.Parent, 1);
-            }
-            // called by next5File button, offset +5
-            else if (btn.Name.Equals(this.Next5FileBtn.Name))
-            {
-                atBounds = moveTracker(this.selectedFile.Parent, 5);
-            }
-            // called by previousFile button, offset -1
-            else if (btn.Name.Equals(this.PreviousFileBtn.Name))
-            {
-                atBounds = moveTracker(this.selectedFile.Parent, -1);
-            }
-            // called by previous5File button,, offset -5
-            else if (btn.Name.Equals(this.Previous5FileBtn.Name))
-            {
-                atBounds = moveTracker(this.selectedFile.Parent, -5);
-            }
-            // if not at bounds, update selected file, and folder
-            if (!atBounds)
-            {
-                // update selected file
-                this.selectedFile = this.selectedFile.Parent.getSelectedTree();
-                // set the textBox texts
-                this.updateText();
-            }
-        }
-
-        /// <summary>
-        /// get a random file from the currently selected folder
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void GenRandomBtn_Click(object sender, RoutedEventArgs e)
-        {
-            this.randomFile = this.selectedFolder.getRandom();
-            this.RandomText.Text = this.randomFile.Name;
-        }
-
-        /// <summary>
-        /// Open file method, can be called by openFile, openFolder, openRandom buttons
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ButtonClick_open(object sender, RoutedEventArgs e)
-        {
-            // if attenpt to open failed, do nothing
-            try
-            {
-                // if the sender is the openFile button, open the file and advance tracker to next file
-                if (sender == this.OpenFileBtn)
-                {
-                    Process.Start("explorer.exe", selectedFile.Path);
-                    this.ButtonClick_ChangeFile(this.NextFileBtn, null);
-                }
-                // else if it was the openFolder button, open the file's folder (parent tree path)
-                else if (sender == this.OpenFolderBtn)
-                    Process.Start("explorer.exe", selectedFile.Parent.Path);
-                // else if it is openRandom, will open randomFile path
-                else if (this.randomFile != null && sender == this.OpenRandomBtn)
-                    Process.Start("explorer.exe", randomFile.Path);
-            } catch (Exception exception) {
-                // if an exception was thrown, check if the tree is up to date
-                this.trackTree.checkTree();
-                selectFolder(this.trackTree.Path);
-            }
         }
 
         #endregion

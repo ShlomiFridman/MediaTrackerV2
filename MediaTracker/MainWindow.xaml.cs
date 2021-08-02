@@ -329,17 +329,11 @@ namespace MediaTracker
             path = Utilties.fixPath(path);
             // clear previous items
             TreeView.Items.Clear();
-            // set the children
-            Utilties.getAllFilesAbove(path, 20).ForEach((child) => setItems(this.TreeView.Items, child));
             // set the textBox text
             this.rootTextBox.Text = path;
 
             // saves the old trackTree
             this.saveTrackTree();
-
-            // saves the new tree
-            this.savedItems = new TreeViewItem[this.TreeView.Items.Count];
-            this.TreeView.Items.CopyTo(savedItems, 0);
 
             // load tracker, stored in root, if none found, create one and save
             this.trackTree = TrackTree.load($"{path}/tracker.dat");
@@ -347,8 +341,14 @@ namespace MediaTracker
             if (this.trackTree == null)
             {
                 this.trackTree = new TrackTree(null, path);
-                this.trackTree.save($"{path}/tracker.dat");
+                this.saveTrackTree();
             }
+
+            this.trackTree.Childrens.ForEach((child) => this.setItems(this.TreeView.Items, child));
+
+            // saves the new tree
+            this.savedItems = new TreeViewItem[this.TreeView.Items.Count];
+            this.TreeView.Items.CopyTo(savedItems, 0);
 
             selectFolder(path);
         }
@@ -397,29 +397,27 @@ namespace MediaTracker
         /// </summary>
         /// <param name="parent">the parent's itemCollection to add the new item to</param>
         /// <param name="path">the path of the new item</param>
-        private void setItems(ItemCollection parent, string path)
+        private void setItems(ItemCollection parent, TrackTree tree)
         {
-            // get the path file info
-            var info = new FileInfo(path);
             // initialize the path treeViewItem, header is the name, tag the full path
             TreeViewItem item = new TreeViewItem()
             {
-                Header = string.IsNullOrEmpty(info.Name) ? path : info.Name,
-                Tag = Utilties.fixPath(path)
+                Header = tree.Name,
+                Tag = tree.Path
             };
             // add the item to the parent
             parent.Add(item);
             // if the item is a directory, add all its children with size above 20mb, and set on left click event (selectFolder)
-            if (info.Attributes.HasFlag(FileAttributes.Directory))
+            if (tree.IsDirectory)
             {
-                item.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(path); };
+                item.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.Path); };
                 item.KeyDown += (sender, e) => { 
                     if (e.Key.Equals(Key.Enter))
-                        selectFolder(path);
+                        selectFolder(tree.Path);
                 };
-                Utilties.getAllFilesAbove(path, 20).ForEach((file) =>
+                tree.Childrens.ForEach((child) =>
                 {
-                    setItems(item.Items, file);
+                    setItems(item.Items, child);
                 });
             }
             // else the item is a file, set the double click event (open file via explorer.exe)

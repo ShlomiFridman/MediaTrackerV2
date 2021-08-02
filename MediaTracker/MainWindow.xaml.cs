@@ -31,6 +31,8 @@ namespace MediaTracker
         private TrackTree selectedFolder;
         private TrackTree selectedFile;
         private TrackTree randomFile;
+        private char keySearched;
+        private Queue<TreeViewItem> keyQueue;
 
         public MainWindow()
         {
@@ -124,6 +126,47 @@ namespace MediaTracker
             this.selectedFolderText.Text = this.selectedFolder.Name;
             this.selectedFileText.Text = this.selectedFile.Name;
             this.selectedFileFolderText.Text = this.selectedFile.Parent.Name;
+        }
+
+        /// <summary>
+        /// focus on the items (in root) that start with the same char pressed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // get typed char
+            char key;
+            Char.TryParse(e.Key.ToString(), out key);
+            TreeViewItem tvi;
+            // if a new key was typed, get all the items that start with the char
+            if (this.keySearched != key)
+            {
+                this.keySearched = key;
+                // if the queue is null, initialize it
+                if (this.keyQueue == null)
+                    this.keyQueue = new Queue<TreeViewItem>();
+                // else clear it
+                else
+                    this.keyQueue.Clear();
+                // enqueue the items
+                foreach (var item in this.TreeView.Items)
+                {
+                    tvi = (TreeViewItem)item;
+                    if (tvi.Header.ToString().ToLower()[0] == char.ToLower(this.keySearched))
+                        this.keyQueue.Enqueue(tvi);
+                }
+            }
+            // if the queue is empty, return
+            if (this.keyQueue.Count == 0)
+                return;
+            // get the head
+            tvi = this.keyQueue.Dequeue();
+            // get focus on the head
+            tvi.Focus();
+            this.selectFolder(tvi.Tag.ToString());
+            // return head to tail
+            this.keyQueue.Enqueue(tvi);
         }
 
         #endregion
@@ -226,6 +269,10 @@ namespace MediaTracker
             if (info.Attributes.HasFlag(FileAttributes.Directory))
             {
                 item.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(path); };
+                item.KeyDown += (sender, e) => { 
+                    if (e.Key.Equals(Key.Enter))
+                        selectFolder(path);
+                };
                 Utilties.getAllFilesAbove(path, 20).ForEach((file) =>
                 {
                     setItems(item.Items, file);
@@ -239,6 +286,15 @@ namespace MediaTracker
                     try
                     {
                         Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
+                    }
+                    catch (Exception ex) { }
+                };
+                item.KeyDown += (sender, e) =>
+                {
+                    try
+                    {
+                        if (e.Key.Equals(Key.Enter))
+                            Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
                     }
                     catch (Exception ex) { }
                 };
@@ -319,8 +375,6 @@ namespace MediaTracker
                 this.selectedFile = this.selectedFile.Parent.Parent.getSelectedTree();
                 // set the textBox texts
                 this.updateText();
-                // save the updated tree
-                saveTrackTree();
             }
         }
 
@@ -365,8 +419,6 @@ namespace MediaTracker
                 this.selectedFile = this.selectedFile.Parent.getSelectedTree();
                 // set the textBox texts
                 this.updateText();
-                // save the updated tree
-                saveTrackTree();
             }
         }
 

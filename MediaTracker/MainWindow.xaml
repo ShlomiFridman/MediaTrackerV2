@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:MediaTracker"
         xmlns:myClasses="clr-namespace:MediaTracker.MyClasses"
         Closing="Window_Closing"
+        KeyDown="Window_KeyDown"
         Icon="pack://application:,,,/assets/images/icon.png"
         mc:Ignorable="d"
         Title="Media Tracker V2" MinHeight="310" MinWidth="600">

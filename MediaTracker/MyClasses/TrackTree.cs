@@ -179,7 +179,8 @@ namespace MediaTracker
         /// <summary>
         /// check if the children in this tree are up to date, if there are some that missing
         /// </summary>
-        public void checkChildren()
+        /// <returns>true if an updated was needed, else false</returns>
+        public bool checkChildren()
         {
             // all children here, no need to update
             List<string> paths = new List<string>();
@@ -193,28 +194,32 @@ namespace MediaTracker
             });
             // removes all found paths
             paths.RemoveAll((path) => { return children.Contains(path); });
-            // all files are here, no need to update
+            // all files are here, no need to update, return false
             if (paths.Count == 0)
-                return;
+                return false;
             // else updating
             // update tracker
             this.Tracker = new TrackerList(this.Path, this.Tracker.Selected);
             paths.ForEach((path) => this.Childrens.Add(new TrackTree(this, Utilties.getName(path))));
+            // tree updated, return true
+            return true;
         }
 
         /// <summary>
         /// check if the tree is up to date
         /// </summary>
-        public void checkTree()
+        /// <returns>true if the tree was updated, else false</returns>
+        public bool checkTree()
         {
             // if this tree is a file, return
             if (!this.IsDirectory)
-                return;
+                return false;
             // calls each child checkTree function
+            bool childrenUpdated = false;
             foreach (var child in Childrens)
-                child.checkTree();
+                childrenUpdated |= child.checkTree();
             // check if this tree's children are up to date
-            this.checkChildren();
+            return childrenUpdated | this.checkChildren();
         }
 
         #endregion

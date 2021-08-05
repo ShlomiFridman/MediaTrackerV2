@@ -275,7 +275,13 @@ namespace MediaTracker
             // if the trackTree isn't initialize, do nothing
             if (this.trackTree == null)
                 return;
-            this.randomFile = this.selectedFolder.getRandom();
+            TrackTree newRandom;
+            int hasMultipleFiles = this.selectedFolder.Childrens.Count;
+            do
+            {
+                newRandom = this.selectedFolder.getRandom();
+            } while (hasMultipleFiles>1 && newRandom == this.randomFile);
+            this.randomFile = newRandom;
             this.RandomText.Text = this.randomFile.Name;
         }
 
@@ -349,8 +355,8 @@ namespace MediaTracker
             // saves the new tree
             this.savedItems = new TreeViewItem[this.TreeView.Items.Count];
             this.TreeView.Items.CopyTo(savedItems, 0);
-
-            selectFolder(path);
+            // set the selected folder as the one the root is pointing at
+            selectFolder(this.trackTree.SelectedPath);
         }
 
         /// <summary>

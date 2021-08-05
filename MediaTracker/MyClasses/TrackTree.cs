@@ -36,9 +36,23 @@ namespace MediaTracker
         /// </summary>
         public string Path { private set; get; }
         /// <summary>
-        /// the selected path of this tree, to which path this tree points
+        /// the selected path of this tree, to which path this tree points at
         /// </summary>
-        public string Selected { get { return this.Tracker.Selected; } }
+        public string SelectedPath { get { return this.Tracker.Selected; } }
+        /// <summary>
+        /// the selected trackTree of this tree, to which tree this tree points at
+        /// </summary>
+        public TrackTree SelectedTree
+        {
+            get
+            {
+                var tree = this.Childrens.Find((child) =>
+                {
+                    return this.SelectedPath.Equals(child.Path);
+                });
+                return tree != null ? tree : this;
+            }
+        }
         /// <summary>
         /// if this tree is a directory, else it is a file
         /// </summary>
@@ -199,7 +213,7 @@ namespace MediaTracker
                 return false;
             // else updating
             // update tracker
-            this.Tracker = new TrackerList(this.Path, this.Tracker.Selected);
+            this.Tracker = new TrackerList(this.Path, this.SelectedPath);
             paths.ForEach((path) => this.Childrens.Add(new TrackTree(this, Utilties.getName(path))));
             // tree updated, return true
             return true;
@@ -237,15 +251,12 @@ namespace MediaTracker
             if (!IsDirectory || this.IsEmpty)
                 return this.Path;
             // find the selected child, and get it's selected, return end result
-            return this.Childrens.Find((child) =>
-            {
-                return this.Selected.Equals(child.Path);
-            }).getSelected();
+            return this.SelectedTree.getSelected();
         }
 
         /// <summary>
         /// returning the tree of end of the line selected path,
-        /// if this.Tracker.Selecte equals "EMPTY" returning this.Path
+        /// if this.Tracker.Selected equals "EMPTY" returning this.Path
         /// </summary>
         /// <returns></returns>
         public TrackTree getSelectedTree()
@@ -254,10 +265,7 @@ namespace MediaTracker
             if (!IsDirectory || this.IsEmpty)
                 return this;
             // find the selected child, and get it's selected, return end result
-            return this.Childrens.Find((child) =>
-            {
-                return this.Selected.Equals(child.Path);
-            }).getSelectedTree();
+            return this.SelectedTree.getSelectedTree();
         }
 
         /// <summary>

@@ -134,6 +134,9 @@ namespace MediaTracker
         /// <param name="e"></param>
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            // if the search box is focues, do nothing
+            if (this.searchTextBox.IsFocused)
+                return;
             // get typed char
             char key;
             Char.TryParse(e.Key.ToString(), out key);

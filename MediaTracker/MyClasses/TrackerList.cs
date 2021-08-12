@@ -36,11 +36,19 @@ namespace MediaTracker
         /// <summary>
         /// string path of currently selected file, if the folder is empty the value is "NONE"
         /// </summary>
-        public string Selected { set
+        public string SelectedPath { set
             {
                 this.index = FilesStrings.IndexOf(value);
             }
-            get { return (index != -1) ? FilesStrings[index] : "NONE"; } }
+            get { return (index != -1) ? FilesStrings[index] : "NONE"; }
+        }
+        /// <summary>
+        /// FileInfo of currently selected file, if the folder is empty the value is "NONE"
+        /// </summary>
+        public FileInfo SelectedInfo
+        {
+            get { return (index != -1) ? FilesInfo[index] : null; }
+        }
 
         #endregion
 

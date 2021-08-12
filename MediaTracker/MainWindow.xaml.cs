@@ -49,6 +49,74 @@ namespace MediaTracker
 
         #region event functions
 
+        #region window events
+
+        /// <summary>
+        /// before closing the window, save the window position, size, and the trackTree
+        /// </summary>
+        /// <param name="sender">main Window</param>
+        /// <param name="e"></param>
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // saves the window position and size
+            Properties.Settings.Default.Top = this.Top;
+            Properties.Settings.Default.Left = this.Left;
+            Properties.Settings.Default.Height = this.Height;
+            Properties.Settings.Default.Width = this.Width;
+            Properties.Settings.Default.Root = this.rootTextBox.Text;
+            Properties.Settings.Default.Save();
+            // saves the tracker tree
+            saveTrackTree();
+        }
+
+        /// <summary>
+        /// focus on the items (in root) that start with the same char pressed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // if the search box is focues, do nothing
+            if (this.searchTextBox.IsFocused)
+                return;
+            // get typed char
+            char key;
+            Char.TryParse(e.Key.ToString(), out key);
+            TreeViewItem tvi;
+            // if a new key was typed, get all the items that start with the char
+            if (this.keySearched != key)
+            {
+                this.keySearched = key;
+                // if the queue is null, initialize it
+                if (this.keyQueue == null)
+                    this.keyQueue = new Queue<TreeViewItem>();
+                // else clear it
+                else
+                    this.keyQueue.Clear();
+                // enqueue the items
+                foreach (var item in this.TreeView.Items)
+                {
+                    tvi = (TreeViewItem)item;
+                    if (tvi.Header.ToString().ToLower()[0] == char.ToLower(this.keySearched))
+                        this.keyQueue.Enqueue(tvi);
+                }
+            }
+            // if the queue is empty, return
+            if (this.keyQueue.Count == 0)
+                return;
+            // get the head
+            tvi = this.keyQueue.Dequeue();
+            // get focus on the head
+            tvi.Focus();
+            this.selectFolder(tvi.Tag.ToString());
+            // return head to tail
+            this.keyQueue.Enqueue(tvi);
+        }
+
+        #endregion
+
+        #region textBox events
+
         /// <summary>
         /// open a folder browser dialog, set the new root as the one selected, and saves the old treeTracker beforehand
         /// </summary>
@@ -100,24 +168,6 @@ namespace MediaTracker
         }
 
         /// <summary>
-        /// before closing the window, save the window position, size, and the trackTree
-        /// </summary>
-        /// <param name="sender">main Window</param>
-        /// <param name="e"></param>
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            // saves the window position and size
-            Properties.Settings.Default.Top = this.Top;
-            Properties.Settings.Default.Left = this.Left;
-            Properties.Settings.Default.Height = this.Height;
-            Properties.Settings.Default.Width = this.Width;
-            Properties.Settings.Default.Root = this.rootTextBox.Text;
-            Properties.Settings.Default.Save();
-            // saves the tracker tree
-            saveTrackTree();
-        }
-
-        /// <summary>
         /// update the text in the textBoxes
         /// </summary>
         private void updateText()
@@ -125,50 +175,6 @@ namespace MediaTracker
             this.selectedFolderText.Text = this.selectedFolder.Name;
             this.selectedFileText.Text = this.selectedFile.Name;
             this.selectedFileFolderText.Text = this.selectedFile.Parent.Name;
-        }
-
-        /// <summary>
-        /// focus on the items (in root) that start with the same char pressed
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            // if the search box is focues, do nothing
-            if (this.searchTextBox.IsFocused)
-                return;
-            // get typed char
-            char key;
-            Char.TryParse(e.Key.ToString(), out key);
-            TreeViewItem tvi;
-            // if a new key was typed, get all the items that start with the char
-            if (this.keySearched != key)
-            {
-                this.keySearched = key;
-                // if the queue is null, initialize it
-                if (this.keyQueue == null)
-                    this.keyQueue = new Queue<TreeViewItem>();
-                // else clear it
-                else
-                    this.keyQueue.Clear();
-                // enqueue the items
-                foreach (var item in this.TreeView.Items)
-                {
-                    tvi = (TreeViewItem)item;
-                    if (tvi.Header.ToString().ToLower()[0] == char.ToLower(this.keySearched))
-                        this.keyQueue.Enqueue(tvi);
-                }
-            }
-            // if the queue is empty, return
-            if (this.keyQueue.Count == 0)
-                return;
-            // get the head
-            tvi = this.keyQueue.Dequeue();
-            // get focus on the head
-            tvi.Focus();
-            this.selectFolder(tvi.Tag.ToString());
-            // return head to tail
-            this.keyQueue.Enqueue(tvi);
         }
 
         #endregion
@@ -185,42 +191,50 @@ namespace MediaTracker
             // if trackTree or selectedFile is null, do nothing
             if (this.trackTree == null || this.selectedFile == null)
                 return;
-            // check if the folder need updating
-            // if 2 layers up is the root, update file's folder
-            if (this.selectedFile.Parent.Parent != this.trackTree)
-                this.selectedFile.Parent.Parent.checkChildren();
-            // else update the root
-            else
-                this.selectedFile.Parent.checkChildren();
-            var btn = (Button)sender;
-            bool atBounds = false;
-            // called by nextFolder button, offset +1
-            if (btn.Name.Equals(this.NextFolderBtn.Name))
+            try
             {
-                // if the selected file is not 2 layers under root, change the tracker 2 layers up tracker
+                // check if the folder need updating
+                // if 2 layers up is the root, update file's folder
                 if (this.selectedFile.Parent.Parent != this.trackTree)
-                    atBounds = moveTracker(this.selectedFile.Parent.Parent, 1);
-                // if the selected file is 2 layers under root, change the file's folder's tracker
+                    this.selectedFile.Parent.Parent.checkChildren();
+                // else update the root
                 else
-                    atBounds = moveTracker(this.selectedFile.Parent, 1);
+                    this.selectedFile.Parent.checkChildren();
+                var btn = (Button)sender;
+                bool atBounds = false;
+                // called by nextFolder button, offset +1
+                if (btn.Name.Equals(this.NextFolderBtn.Name))
+                {
+                    // if the selected file is not 2 layers under root, change the tracker 2 layers up tracker
+                    if (this.selectedFile.Parent.Parent != this.trackTree)
+                        atBounds = moveTracker(this.selectedFile.Parent.Parent, 1);
+                    // if the selected file is 2 layers under root, change the file's folder's tracker
+                    else
+                        atBounds = moveTracker(this.selectedFile.Parent, 1);
+                }
+                // called by previousFolder button, offset -1
+                else if (btn.Name.Equals(this.PreviousFolderBtn.Name))
+                {
+                    // if the selected file is not 2 layers under root, change the tracker 2 layers up tracker
+                    if (this.selectedFile.Parent.Parent != this.trackTree)
+                        atBounds = moveTracker(this.selectedFile.Parent.Parent, -1);
+                    // if the selected file is 2 layers under root, change the file's folder's tracker
+                    else
+                        atBounds = moveTracker(this.selectedFile.Parent, -1);
+                }
+                // if not at bounds, update selected file, and folder
+                if (!atBounds)
+                {
+                    // update selected file
+                    this.selectedFile = this.selectedFile.Parent.Parent.getSelectedTree();
+                    // set the textBox texts
+                    this.updateText();
+                }
             }
-            // called by previousFolder button, offset -1
-            else if (btn.Name.Equals(this.PreviousFolderBtn.Name))
+            catch (Exception exp)
             {
-                // if the selected file is not 2 layers under root, change the tracker 2 layers up tracker
-                if (this.selectedFile.Parent.Parent != this.trackTree)
-                    atBounds = moveTracker(this.selectedFile.Parent.Parent, -1);
-                // if the selected file is 2 layers under root, change the file's folder's tracker
-                else
-                    atBounds = moveTracker(this.selectedFile.Parent, -1);
-            }
-            // if not at bounds, update selected file, and folder
-            if (!atBounds)
-            {
-                // update selected file
-                this.selectedFile = this.selectedFile.Parent.Parent.getSelectedTree();
-                // set the textBox texts
-                this.updateText();
+                selectFolder(this.trackTree.Path);
+                this.trackTree.checkChildren();
             }
         }
 
@@ -234,37 +248,45 @@ namespace MediaTracker
             // if trackTree or selectedFile is null, do nothing
             if (this.trackTree == null || this.selectedFile == null)
                 return;
-            // check if the folder need updating
-            this.selectedFile.Parent.checkChildren();
-            var btn = (Button)sender;
-            bool atBounds = false;
-            // called by nextFile button, offset +1
-            if (btn.Name.Equals(this.NextFileBtn.Name))
+            try
             {
-                atBounds = moveTracker(this.selectedFile.Parent, 1);
+                // check if the folder need updating
+                this.selectedFile.Parent.checkChildren();
+                var btn = (Button)sender;
+                bool atBounds = false;
+                // called by nextFile button, offset +1
+                if (btn.Name.Equals(this.NextFileBtn.Name))
+                {
+                    atBounds = moveTracker(this.selectedFile.Parent, 1);
+                }
+                // called by next5File button, offset +5
+                else if (btn.Name.Equals(this.Next5FileBtn.Name))
+                {
+                    atBounds = moveTracker(this.selectedFile.Parent, 5);
+                }
+                // called by previousFile button, offset -1
+                else if (btn.Name.Equals(this.PreviousFileBtn.Name))
+                {
+                    atBounds = moveTracker(this.selectedFile.Parent, -1);
+                }
+                // called by previous5File button,, offset -5
+                else if (btn.Name.Equals(this.Previous5FileBtn.Name))
+                {
+                    atBounds = moveTracker(this.selectedFile.Parent, -5);
+                }
+                // if not at bounds, update selected file, and folder
+                if (!atBounds)
+                {
+                    // update selected file
+                    this.selectedFile = this.selectedFile.Parent.getSelectedTree();
+                    // set the textBox texts
+                    this.updateText();
+                }
             }
-            // called by next5File button, offset +5
-            else if (btn.Name.Equals(this.Next5FileBtn.Name))
+            catch (Exception exp)
             {
-                atBounds = moveTracker(this.selectedFile.Parent, 5);
-            }
-            // called by previousFile button, offset -1
-            else if (btn.Name.Equals(this.PreviousFileBtn.Name))
-            {
-                atBounds = moveTracker(this.selectedFile.Parent, -1);
-            }
-            // called by previous5File button,, offset -5
-            else if (btn.Name.Equals(this.Previous5FileBtn.Name))
-            {
-                atBounds = moveTracker(this.selectedFile.Parent, -5);
-            }
-            // if not at bounds, update selected file, and folder
-            if (!atBounds)
-            {
-                // update selected file
-                this.selectedFile = this.selectedFile.Parent.getSelectedTree();
-                // set the textBox texts
-                this.updateText();
+                selectFolder(this.trackTree.Path);
+                this.trackTree.checkChildren();
             }
         }
 
@@ -283,7 +305,7 @@ namespace MediaTracker
             do
             {
                 newRandom = this.selectedFolder.getRandom();
-            } while (hasMultipleFiles>1 && newRandom == this.randomFile);
+            } while (hasMultipleFiles > 1 && newRandom == this.randomFile);
             this.randomFile = newRandom;
             this.RandomText.Text = this.randomFile.Name;
         }
@@ -317,10 +339,12 @@ namespace MediaTracker
             catch (Exception exception)
             {
                 // if an exception was thrown, check if the tree is up to date
-                this.trackTree.checkTree();
+                this.trackTree.checkChildren();
                 selectFolder(this.trackTree.Path);
             }
         }
+
+        #endregion
 
         #endregion
 
@@ -394,7 +418,7 @@ namespace MediaTracker
             } catch (Exception exp)
             {
                 // if an exception was thrown, check if the tree is up to date
-                this.trackTree.checkTree();
+                this.trackTree.checkChildren();
                 selectFolder(this.trackTree.Path);
             }
         }

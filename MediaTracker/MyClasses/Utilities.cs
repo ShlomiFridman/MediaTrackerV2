@@ -38,6 +38,35 @@ namespace MediaTracker
         }
 
         /// <summary>
+        /// return the path string with all '/' replaced with '\'
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string fixPath(string path)
+        {
+            return path.Replace('/', '\\');
+        }
+
+        /// <summary>
+        /// return the name of the file in given path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>string</returns>
+        public static string getName(string path)
+        {
+            try
+            {
+                return new FileInfo(path).Name;
+            }
+            catch (Exception ex)
+            {
+                return path;
+            }
+        }
+
+        #region get Files\Folders methods
+
+        /// <summary>
         /// returns all the files paths, that their size is above the given size (in mb), in a list
         /// </summary>
         /// <param name="path"></param>
@@ -114,31 +143,7 @@ namespace MediaTracker
             return files;
         }
 
-        /// <summary>
-        /// return the path string with all '/' replaced with '\'
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        public static string fixPath(string path)
-        {
-            return path.Replace('/', '\\');
-        }
-
-        /// <summary>
-        /// return the name of the file in given path
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns>string</returns>
-        public static string getName(string path)
-        {
-            try
-            {
-                return new FileInfo(path).Name;
-            } catch(Exception ex)
-            {
-                return path;
-            }
-        }
+        #endregion
 
     }
 }

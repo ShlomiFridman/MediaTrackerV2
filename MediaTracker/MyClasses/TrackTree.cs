@@ -38,7 +38,7 @@ namespace MediaTracker
         /// <summary>
         /// the selected path of this tree, to which path this tree points at
         /// </summary>
-        public string SelectedPath { get { return this.Tracker.Selected; } }
+        public string SelectedPath { get { return this.Tracker.SelectedPath; } }
         /// <summary>
         /// the selected trackTree of this tree, to which tree this tree points at
         /// </summary>
@@ -98,14 +98,16 @@ namespace MediaTracker
         /// </summary>
         /// <param name="parent"></param>
         /// <param name="reader"></param>
-        private TrackTree(TrackTree parent, BinaryReader reader)
+        private TrackTree(TrackTree parent, BinaryReader reader, string root)
         {
             // inititalize parent tree
             this.Parent = parent;
             // read the name
             this.Name = reader.ReadString();
+            if (parent == null)
+                this.Name = root;
             // build the tree Path
-            this.Path = (parent != null) ? $"{parent.Path}/{Name}" : Name;
+            this.Path = (parent != null) ? $"{parent.Path}\\{Name}" : Name;
             // fix path, replace '/' with '\'
             this.Path = Utilties.fixPath(this.Path);
             this.Childrens = new List<TrackTree>(); // initalize children list
@@ -120,7 +122,7 @@ namespace MediaTracker
                 {
                     try
                     {
-                        var childTracker = new TrackTree(this, reader);
+                        var childTracker = new TrackTree(this, reader,null);
                         this.Childrens.Add(childTracker);
                     } catch (Exception ex) { }
                 }
@@ -181,7 +183,7 @@ namespace MediaTracker
                 if (child.setPathTo(dest))
                 {
                     // point this.Tracker.selected at the child
-                    this.Tracker.Selected = child.Path;
+                    this.Tracker.SelectedPath = child.Path;
                     // returning true, that this tree contains the path
                     return true;
                 }
@@ -196,47 +198,40 @@ namespace MediaTracker
         /// <returns>true if an updated was needed, else false</returns>
         public bool checkChildren()
         {
-            // all children here, no need to update
-            List<string> paths = new List<string>();
-            List<string> children = new List<string>();
-            // get all current files and directories
-            paths.AddRange(Utilties.getAllFilesAbove(this.Path, 20));
-            // get all children paths
-            this.Childrens.ForEach((child) =>
-            {
-                children.Add(child.Path);
-            });
-            // removes all found paths
-            paths.RemoveAll((path) => { return children.Contains(path); });
-            // all files are here, no need to update, return false
-            if (paths.Count == 0)
+            if (!this.IsDirectory)
                 return false;
-            // else updating
-            // update tracker
+            // update this tracker
             this.Tracker = new TrackerList(this.Path, this.SelectedPath);
-            paths.ForEach((path) => this.Childrens.Add(new TrackTree(this, Utilties.getName(path))));
+            // init lists
+            List<string> toAdd = new List<string>();
+            List<string> toRemove = new List<string>();
+            List<TrackTree> toUpdate = new List<TrackTree>();
+            // get all current files and directories
+            toAdd.AddRange(Utilties.getAllFilesAbove(this.Path, 20));
+            // filter all children into 
+            Childrens.ForEach((child) =>
+            {
+                // child still exists, check if need updating
+                if (toAdd.Contains(child.Path))
+                {
+                    // no need to reAdd the child
+                    toAdd.Remove(child.Path);
+                    // to to update list
+                    toUpdate.Add(child);
+                }
+                else
+                    // the child not found, to be removed later
+                    toRemove.Add(child.Path);
+            });
+            // add missing paths
+            toAdd.ForEach((path) => this.Childrens.Add(new TrackTree(this, Utilties.getName(path))));
+            // remove unFound paths
+            Childrens.RemoveAll((child) => { return toRemove.Contains(child.Path); });
+            // update already exist children
+            toUpdate.ForEach((child) => child.checkChildren());
             // tree updated, return true
             return true;
         }
-
-        /// <summary>
-        /// check if the tree is up to date
-        /// </summary>
-        /// <returns>true if the tree was updated, else false</returns>
-        public bool checkTree()
-        {
-            // if this tree is a file, return
-            if (!this.IsDirectory)
-                return false;
-            // calls each child checkTree function
-            bool childrenUpdated = false;
-            foreach (var child in Childrens)
-                childrenUpdated |= child.checkTree();
-            // check if this tree's children are up to date
-            return childrenUpdated | this.checkChildren();
-        }
-
-        #endregion
 
         #region get selected\random methods
 
@@ -326,7 +321,10 @@ namespace MediaTracker
             // if IsDirectory, write t he selectedly tracked path, amount of children, and the children themselves
             if (IsDirectory)
             {
-                writer.Write(Tracker.Selected);
+                if (Tracker.SelectedInfo != null)
+                    writer.Write(Tracker.SelectedInfo.Name);
+                else
+                    writer.Write("NONE");
                 writer.Write(Childrens.Count);
                 foreach (var child in Childrens)
                     flag &= child.save(writer);
@@ -336,7 +334,7 @@ namespace MediaTracker
 
         #endregion
 
-        #region staticLoad
+        #region static load method
 
         /// <summary>
         /// load a Tracktree, from given path,
@@ -352,14 +350,15 @@ namespace MediaTracker
                 // create the reader, may throw fileNotExists error
                 BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open));
                 reader.ReadString();    // read the selected file string
-                var tree = new TrackTree(null, reader); // initialize the root trackTree via reader
+                var tree = new TrackTree(null, reader, new FileInfo(path).DirectoryName); // initialize the root trackTree via reader
                 // loading successful, close reader and stream
                 reader.Close();
                 // check if the tree is up to date
-                tree.checkTree();
+                tree.checkChildren();
                 // return root
                 return tree;
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 // an error occured, return null
                 return null;
@@ -367,5 +366,8 @@ namespace MediaTracker
         }
 
         #endregion
+
+        #endregion
+
     }
 }

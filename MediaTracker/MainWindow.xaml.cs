@@ -194,7 +194,7 @@ namespace MediaTracker
             try
             {
                 // if file's folder not found, throw exception, and update tree
-                if (!File.Exists(selectedFile.Parent.Path))
+                if (!Directory.Exists(selectedFile.Parent.Path))
                     throw new FileNotFoundException();
 
                 // check if the folder need updating
@@ -404,7 +404,7 @@ namespace MediaTracker
             try
             {
                 // if the selected file not found, throw exception
-                if (!File.Exists(path))
+                if (!Directory.Exists(path) && !File.Exists(path))
                     throw new FileNotFoundException();
                 // if not a directory, do nothing
                 if (!File.GetAttributes(path).HasFlag(FileAttributes.Directory))

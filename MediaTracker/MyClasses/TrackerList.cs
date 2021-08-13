@@ -90,7 +90,7 @@ namespace MediaTracker
         public TrackerList(string directory, string selected) : this(directory)
         {
             // initialize selected file
-            this.index = this.FilesStrings.IndexOf(selected);
+            this.index = this.FilesStrings.IndexOf($"{directory}\\{selected}");
             // if the given selected does not exists, will initialize at the first valid file, if there are no files then index = -1
             if (index == -1)
                 this.index = (this.FilesStrings.Count != 0)? 0:-1;

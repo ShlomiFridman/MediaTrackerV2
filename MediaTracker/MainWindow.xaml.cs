@@ -193,6 +193,10 @@ namespace MediaTracker
                 return;
             try
             {
+                // if file's folder not found, throw exception, and update tree
+                if (!File.Exists(selectedFile.Parent.Path))
+                    throw new FileNotFoundException();
+
                 // check if the folder need updating
                 // if 2 layers up is the root, update file's folder
                 if (this.selectedFile.Parent.Parent != this.trackTree)
@@ -233,8 +237,8 @@ namespace MediaTracker
             }
             catch (Exception exp)
             {
-                selectFolder(this.trackTree.Path);
                 this.trackTree.checkChildren();
+                selectFolder(this.trackTree.SelectedPath);
             }
         }
 
@@ -245,11 +249,13 @@ namespace MediaTracker
         /// <param name="e"></param>
         private void ButtonClick_ChangeFile(object sender, RoutedEventArgs e)
         {
-            // if trackTree or selectedFile is null, do nothing
             if (this.trackTree == null || this.selectedFile == null)
                 return;
             try
             {
+                // if file not found, throw exception, and update tree
+                if (!File.Exists(selectedFile.Path))
+                    throw new FileNotFoundException();
                 // check if the folder need updating
                 this.selectedFile.Parent.checkChildren();
                 var btn = (Button)sender;
@@ -285,8 +291,8 @@ namespace MediaTracker
             }
             catch (Exception exp)
             {
-                selectFolder(this.trackTree.Path);
                 this.trackTree.checkChildren();
+                selectFolder(this.trackTree.SelectedPath);
             }
         }
 
@@ -340,7 +346,7 @@ namespace MediaTracker
             {
                 // if an exception was thrown, check if the tree is up to date
                 this.trackTree.checkChildren();
-                selectFolder(this.trackTree.Path);
+                selectFolder(this.trackTree.SelectedPath);
             }
         }
 
@@ -397,6 +403,10 @@ namespace MediaTracker
             path = Utilties.fixPath(path);
             try
             {
+                // if the selected file not found, throw exception
+                if (!File.Exists(path))
+                    throw new FileNotFoundException();
+                // if not a directory, do nothing
                 if (!File.GetAttributes(path).HasFlag(FileAttributes.Directory))
                     return;
                 // get selected tree and its selected
@@ -419,7 +429,7 @@ namespace MediaTracker
             {
                 // if an exception was thrown, check if the tree is up to date
                 this.trackTree.checkChildren();
-                selectFolder(this.trackTree.Path);
+                selectFolder(this.trackTree.SelectedPath);
             }
         }
 

@@ -108,8 +108,6 @@ namespace MediaTracker
                 this.Name = root;
             // build the tree Path
             this.Path = (parent != null) ? $"{parent.Path}\\{Name}" : Name;
-            // fix path, replace '/' with '\'
-            this.Path = Utilties.fixPath(this.Path);
             this.Childrens = new List<TrackTree>(); // initalize children list
             // read IsDirectory flag
             this.IsDirectory = reader.ReadBoolean();
@@ -126,8 +124,6 @@ namespace MediaTracker
                         this.Childrens.Add(childTracker);
                     } catch (Exception ex) { }
                 }
-                // check if all the children are up to date
-                checkChildren();
             }
         }
 
@@ -201,7 +197,7 @@ namespace MediaTracker
             if (!this.IsDirectory)
                 return false;
             // update this tracker
-            this.Tracker = new TrackerList(this.Path, this.SelectedPath);
+            this.Tracker = new TrackerList(this.Path, this.SelectedTree.Name);
             // init lists
             List<string> toAdd = new List<string>();
             List<string> toRemove = new List<string>();

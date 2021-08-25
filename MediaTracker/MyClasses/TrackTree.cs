@@ -196,6 +196,7 @@ namespace MediaTracker
         {
             if (!this.IsDirectory)
                 return false;
+            bool updateNeeded = false;
             // update this tracker
             this.Tracker = new TrackerList(this.Path, this.SelectedTree.Name);
             // init lists
@@ -223,10 +224,10 @@ namespace MediaTracker
             toAdd.ForEach((path) => this.Childrens.Add(new TrackTree(this, Utilties.getName(path))));
             // remove unFound paths
             Childrens.RemoveAll((child) => { return toRemove.Contains(child.Path); });
-            // update already exist children
-            toUpdate.ForEach((child) => child.checkChildren());
-            // tree updated, return true
-            return true;
+            // update already exist children, if one of the child needed updating, return true
+            toUpdate.ForEach((child) => updateNeeded |= child.checkChildren());
+            // tree updated, return true if one of the children needed updating or this tree needed
+            return updateNeeded | (toAdd.Count>0 || toRemove.Count>0);
         }
 
         #region get selected\random methods

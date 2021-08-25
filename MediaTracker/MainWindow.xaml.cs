@@ -200,10 +200,10 @@ namespace MediaTracker
                 // check if the folder need updating
                 // if 2 layers up is the root, update file's folder
                 if (this.selectedFile.Parent.Parent != this.trackTree)
-                    this.selectedFile.Parent.Parent.checkChildren();
+                    this.checkTrees(this.selectedFile.Parent.Parent);
                 // else update the root
                 else
-                    this.selectedFile.Parent.checkChildren();
+                    this.checkTrees(this.selectedFile.Parent);
                 var btn = (Button)sender;
                 bool atBounds = false;
                 // called by nextFolder button, offset +1
@@ -237,7 +237,7 @@ namespace MediaTracker
             }
             catch (Exception exp)
             {
-                this.trackTree.checkChildren();
+                this.checkTrees(this.trackTree);
                 selectFolder(this.trackTree.SelectedPath);
             }
         }
@@ -257,7 +257,7 @@ namespace MediaTracker
                 if (!File.Exists(selectedFile.Path))
                     throw new FileNotFoundException();
                 // check if the folder need updating
-                this.selectedFile.Parent.checkChildren();
+                checkTrees(this.selectedFile.Parent);
                 var btn = (Button)sender;
                 bool atBounds = false;
                 // called by nextFile button, offset +1
@@ -291,7 +291,7 @@ namespace MediaTracker
             }
             catch (Exception exp)
             {
-                this.trackTree.checkChildren();
+                checkTrees(this.trackTree);
                 selectFolder(this.trackTree.SelectedPath);
             }
         }
@@ -345,7 +345,7 @@ namespace MediaTracker
             catch (Exception exception)
             {
                 // if an exception was thrown, check if the tree is up to date
-                this.trackTree.checkChildren();
+                this.checkTrees(this.trackTree);
                 selectFolder(this.trackTree.SelectedPath);
             }
         }
@@ -428,7 +428,7 @@ namespace MediaTracker
             } catch (Exception exp)
             {
                 // if an exception was thrown, check if the tree is up to date
-                this.trackTree.checkChildren();
+                this.checkTrees(this.trackTree);
                 selectFolder(this.trackTree.SelectedPath);
             }
         }
@@ -483,6 +483,90 @@ namespace MediaTracker
                     }
                     catch (Exception ex) { }
                 };
+            }
+        }
+
+        /// <summary>
+        /// search the treeView for the item with the given path
+        /// using the overloaded method for recursive search
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>TreeViewItem if the item was found, else null</returns>
+        private TreeViewItem searchItem(string path)
+        {
+            foreach (TreeViewItem item in this.TreeView.Items)
+            {
+                var res = this.searchItem(item, path);
+                if (res != null)
+                    return res;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// recursive search for the given path, if this item isn't it, search its children
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="path"></param>
+        /// <returns>TreeViewItem if the item was found, else null</returns>
+        private TreeViewItem searchItem(TreeViewItem item, string path)
+        {
+            // if is the right item, return it
+            if (item.Tag.ToString().Equals(path))
+                return item;
+            // else search the children
+            foreach (TreeViewItem node in item.Items)
+            {
+                var res = this.searchItem(node, path);
+                if (res != null)
+                    return res;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// update the treeViewItem with the children of the trackTree
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="tree"></param>
+        private void updateTreeView(TreeViewItem item, TrackTree tree)
+        {
+            // clear previous subItems
+            item.Items.Clear();
+            // update the item
+            tree.Childrens.ForEach((child) =>
+            {
+                this.setItems(item.Items, child);
+            });
+        }
+
+        /// <summary>
+        /// check if the trackTree need updating, if so will also update its opposite treeViewItem,
+        /// if the tracktree is the root, and needed updating, will update the whole tree
+        /// </summary>
+        /// <param name="trackTree"></param>
+        private void checkTrees(TrackTree trackTree)
+        {
+            if (trackTree.checkChildren())
+            {
+                // if not the root, update the node
+                if (trackTree != this.trackTree)
+                {
+                    TreeViewItem item = searchItem(trackTree.Path);
+                    if (item != null)
+                        this.updateTreeView(item, trackTree);
+                }
+                // else update the whole tree
+                else
+                {
+                    // clear previous subItems
+                    this.TreeView.Items.Clear();
+                    // update the item
+                    trackTree.Childrens.ForEach((child) =>
+                    {
+                        this.setItems(this.TreeView.Items, child);
+                    });
+                }
             }
         }
 

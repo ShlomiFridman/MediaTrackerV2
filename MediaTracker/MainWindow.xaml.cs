@@ -15,6 +15,8 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Diagnostics;
 using System.Windows.Forms;
+using System.Timers;
+using System.Threading;
 using Button = System.Windows.Controls.Button;
 
 namespace MediaTracker
@@ -33,6 +35,8 @@ namespace MediaTracker
         private TrackTree randomFile;
         private char keySearched;
         private Queue<TreeViewItem> keyQueue;
+
+        private System.Timers.Timer searchTimer;
 
         public MainWindow()
         {
@@ -141,29 +145,88 @@ namespace MediaTracker
         /// <param name="e"></param>
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // no selected root
-            if (savedItems == null)
-                return;
-            // get the search string
-            string search = ((System.Windows.Controls.TextBox)sender).Text;
-            var items = this.TreeView.Items;    // get the items reference
-            // clear selected items
-            items.Clear();
-            // if the search string is empty, return to original list
-            if (string.IsNullOrEmpty(search))
+            // check if the timer is initialized
+            // if so will reset the timer
+            if (this.searchTimer != null)
             {
-                foreach (var item in savedItems)
-                    items.Add(item);
+                this.searchTimer.Stop();
+                this.searchTimer.Start();
             }
-            // else add only the items that contain the search string, ignore cases
+            // else initialize time and start it
             else
             {
-                foreach (var item in savedItems)
+                // set the timer to start in a second
+                this.searchTimer = new System.Timers.Timer(1000);
+                // add the event
+                this.searchTimer.Elapsed += (source, e) =>
                 {
-                    //System.Diagnostics.Debug.WriteLine($"{item.Header.ToString()} ? {search} = {item.Header.ToString().Contains(search)}");
-                    if (item.Header.ToString().ToLower().Contains(search.ToLower()))
-                        items.Add(item);
-                }
+                    // set the event in a new thread, because the search may take some time
+                    new Thread(() =>
+                    {
+                        // set to run in background
+                        Thread.CurrentThread.IsBackground = true;
+                        // lock the treeViewItems
+                        lock (this.TreeView.Items)
+                        {
+                            // update gui
+                            this.Dispatcher.Invoke(() =>
+                            {
+                                // no selected root
+                                if (savedItems == null)
+                                    return;
+                                // get the search string
+                                string search = ((System.Windows.Controls.TextBox)sender).Text;
+                                var items = this.TreeView.Items;    // get the items reference
+                                // clear selected items
+                                items.Clear();
+                                // if the search string is empty, return to original list
+                                if (string.IsNullOrEmpty(search))
+                                {
+                                    foreach (var item in savedItems)
+                                        items.Add(item);
+                                }
+                                // else add only the items that contain the search string, ignore cases
+                                else
+                                {
+                                    // get the search result and loop through them
+                                    foreach (var item in this.searchTreeView(search))
+                                    {
+                                        // clone the item
+                                        var itemToAdd = new TreeViewItem()
+                                        {
+                                            Header = item.Header,
+                                            Tag = item.Tag
+                                        };
+                                        // add the events
+                                        itemToAdd.MouseDoubleClick += (sender, e) =>
+                                        {
+                                            try
+                                            {
+                                                Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
+                                            }
+                                            catch (Exception ex) { }
+                                        };
+                                        itemToAdd.KeyDown += (sender, e) =>
+                                        {
+                                            try
+                                            {
+                                                if (e.Key.Equals(Key.Enter))
+                                                    Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
+                                            }
+                                            catch (Exception ex) { }
+                                        };
+                                        // add the item to the root treeView
+                                        items.Add(itemToAdd);
+                                    }
+                                }
+                            });
+                        }
+                    }).Start(); // starts the thread
+                    // stops the timer after the thread start, so the timer will only run once
+                    this.searchTimer.Stop();
+                };
+                // start the timer after initialization, it will run in a second
+                this.searchTimer.Start();
             }
         }
 
@@ -598,6 +661,42 @@ namespace MediaTracker
                 return true;
             // save
             return this.trackTree.save($"{this.trackTree.Path}/tracker.dat");
+        }
+
+        /// <summary>
+        /// start the search of savedItems for all items with the matching header
+        /// </summary>
+        /// <param name="searchString"></param>
+        /// <returns></returns>
+        private List<TreeViewItem> searchTreeView(string searchString)
+        {
+            // initialize list
+            var list = new List<TreeViewItem>();
+            // start the search of all root files
+            foreach (TreeViewItem item in this.savedItems)
+                list.AddRange(searchTreeView(item, searchString.ToLower()));
+            // return result
+            return list;
+        }
+
+        /// <summary>
+        /// search the item and all its subItems
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="searchString"></param>
+        /// <returns></returns>
+        private List<TreeViewItem> searchTreeView(TreeViewItem item, string searchString)
+        {
+            // initialize list
+            var list = new List<TreeViewItem>();
+            // if current item's header matching, add to list
+            if (item.Header.ToString().ToLower().Contains(searchString)) 
+                list.Add(item);
+            // search all subItems
+            foreach (TreeViewItem subItem in item.Items)
+                list.AddRange(searchTreeView(subItem, searchString));
+            // return result
+            return list;
         }
 
         #endregion

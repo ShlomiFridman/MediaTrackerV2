@@ -567,6 +567,12 @@ namespace MediaTracker
                         this.setItems(this.TreeView.Items, child);
                     });
                 }
+                // if the search textBox is empty, and the tree was updated, save the updated tree
+                if (string.IsNullOrEmpty(this.searchTextBox.Text))
+                {
+                    this.savedItems = new TreeViewItem[this.TreeView.Items.Count];
+                    this.TreeView.Items.CopyTo(savedItems, 0);
+                }
             }
         }
 

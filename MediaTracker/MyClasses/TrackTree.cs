@@ -100,6 +100,9 @@ namespace MediaTracker
         /// <param name="reader"></param>
         private TrackTree(TrackTree parent, BinaryReader reader, string root)
         {
+            // if at end of stream, return
+            if (reader.BaseStream.Position == reader.BaseStream.Length)
+                return;
             // inititalize parent tree
             this.Parent = parent;
             // read the name
@@ -108,6 +111,9 @@ namespace MediaTracker
                 this.Name = root;
             // build the tree Path
             this.Path = (parent != null) ? $"{parent.Path}\\{Name}" : Name;
+            // if the folder/file no longer exists, return
+            if (!Directory.Exists(this.Path) && !File.Exists(this.Path))
+                return;
             this.Childrens = new List<TrackTree>(); // initalize children list
             // read IsDirectory flag
             this.IsDirectory = reader.ReadBoolean();

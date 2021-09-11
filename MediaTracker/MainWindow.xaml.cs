@@ -176,10 +176,10 @@ namespace MediaTracker
                                     return;
                                 // get the search string
                                 string search = ((System.Windows.Controls.TextBox)sender).Text;
-                                var items = this.TreeView.Items;    // get the items reference
-                                // clear selected items
+                                var items = this.TreeView.Items;    // get the root itemCollection ref
+                                // clear previous items in root
                                 items.Clear();
-                                // if the search string is empty, return to original list
+                                // if the search string is empty, return the original list to root
                                 if (string.IsNullOrEmpty(search))
                                 {
                                     foreach (var item in savedItems)
@@ -188,36 +188,9 @@ namespace MediaTracker
                                 // else add only the items that contain the search string, ignore cases
                                 else
                                 {
-                                    // get the search result and loop through them
-                                    foreach (var item in this.searchTreeView(search))
-                                    {
-                                        // clone the item
-                                        var itemToAdd = new TreeViewItem()
-                                        {
-                                            Header = item.Header,
-                                            Tag = item.Tag
-                                        };
-                                        // add the events
-                                        itemToAdd.MouseDoubleClick += (sender, e) =>
-                                        {
-                                            try
-                                            {
-                                                Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
-                                            }
-                                            catch (Exception ex) { }
-                                        };
-                                        itemToAdd.KeyDown += (sender, e) =>
-                                        {
-                                            try
-                                            {
-                                                if (e.Key.Equals(Key.Enter))
-                                                    Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
-                                            }
-                                            catch (Exception ex) { }
-                                        };
-                                        // add the item to the root treeView
-                                        items.Add(itemToAdd);
-                                    }
+                                    // readd the matching items to root
+                                    foreach (TreeViewItem item in this.savedItems)
+                                        searchTreeView(TreeView.Items, item, search.ToLower());
                                 }
                             });
                         }
@@ -529,23 +502,8 @@ namespace MediaTracker
             // else the item is a file, set the double click event (open file via explorer.exe)
             else
             {
-                item.MouseDoubleClick += (sender, e) =>
-                {
-                    try
-                    {
-                        Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
-                    }
-                    catch (Exception ex) { }
-                };
-                item.KeyDown += (sender, e) =>
-                {
-                    try
-                    {
-                        if (e.Key.Equals(Key.Enter))
-                            Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
-                    }
-                    catch (Exception ex) { }
-                };
+                item.MouseDoubleClick += this.onItemDoubleClick;
+                item.KeyDown += this.onItemEnter;
             }
         }
 
@@ -663,6 +621,7 @@ namespace MediaTracker
             return this.trackTree.save($"{this.trackTree.Path}/tracker.dat");
         }
 
+        /*
         /// <summary>
         /// start the search of savedItems for all items with the matching header
         /// </summary>
@@ -678,25 +637,95 @@ namespace MediaTracker
             // return result
             return list;
         }
+        */
 
         /// <summary>
-        /// search the item and all its subItems
+        /// if the current item or one of its children matches the search string given, will add the file to the parent's collection
         /// </summary>
         /// <param name="item"></param>
         /// <param name="searchString"></param>
         /// <returns></returns>
-        private List<TreeViewItem> searchTreeView(TreeViewItem item, string searchString)
+        private bool searchTreeView(ItemCollection parent, TreeViewItem item, string searchString)
         {
-            // initialize list
-            var list = new List<TreeViewItem>();
+            bool flag = false;
+            var clone = cloneItem(item);
             // if current item's header matching, add to list
             if (item.Header.ToString().ToLower().Contains(searchString)) 
-                list.Add(item);
+                flag = true;
             // search all subItems
             foreach (TreeViewItem subItem in item.Items)
-                list.AddRange(searchTreeView(subItem, searchString));
+                flag |= searchTreeView(clone.Items, subItem, searchString);
+            if (flag)
+            {
+                parent.Add(clone);
+            }
             // return result
-            return list;
+            return flag;
+        }
+
+        /// <summary>
+        /// clone the treeViewItem given and set its events
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns>TreeViewItem clone</returns>
+        private TreeViewItem cloneItem(TreeViewItem item)
+        {
+            // init clone
+            var clone = new TreeViewItem()
+            {
+                Header = item.Header,
+                Tag = item.Tag
+            };
+            // if file, set open on events
+            if (File.Exists(item.Tag.ToString()))
+            {
+                clone.MouseDoubleClick += this.onItemDoubleClick;
+                clone.KeyDown += this.onItemEnter;
+            }
+            // else set selectFolder events
+            else if (Directory.Exists(item.Tag.ToString()))
+            {
+                var tree = this.trackTree.search(item.Tag.ToString());
+                clone.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.Path); };
+                clone.KeyDown += (sender, e) => {
+                    if (e.Key.Equals(Key.Enter))
+                        selectFolder(tree.Path);
+                };
+                tree.Childrens.ForEach((child) =>
+                {
+                    setItems(item.Items, child);
+                });
+            }
+            return clone;
+        }
+
+        /// <summary>
+        /// on double click open the treeViewItem file via explorer
+        /// </summary>
+        /// <param name="sender">TreeViewItem</param>
+        /// <param name="e"></param>
+        private void onItemDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
+            }
+            catch (Exception ex) { }
+        }
+
+        /// <summary>
+        /// on enter key open the treeViewItem file via explorer
+        /// </summary>
+        /// <param name="sender">TreeViewItem</param>
+        /// <param name="e"></param>
+        private void onItemEnter(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            try
+            {
+                if (e.Key.Equals(Key.Enter))
+                    Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
+            }
+            catch (Exception ex) { }
         }
 
         #endregion

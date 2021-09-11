@@ -190,7 +190,9 @@ namespace MediaTracker
                                 {
                                     // readd the matching items to root
                                     foreach (TreeViewItem item in this.savedItems)
+                                    {
                                         searchTreeView(TreeView.Items, item, search.ToLower());
+                                    }
                                 }
                             });
                         }
@@ -681,20 +683,6 @@ namespace MediaTracker
             {
                 clone.MouseDoubleClick += this.onItemDoubleClick;
                 clone.KeyDown += this.onItemEnter;
-            }
-            // else set selectFolder events
-            else if (Directory.Exists(item.Tag.ToString()))
-            {
-                var tree = this.trackTree.search(item.Tag.ToString());
-                clone.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.Path); };
-                clone.KeyDown += (sender, e) => {
-                    if (e.Key.Equals(Key.Enter))
-                        selectFolder(tree.Path);
-                };
-                tree.Childrens.ForEach((child) =>
-                {
-                    setItems(item.Items, child);
-                });
             }
             return clone;
         }

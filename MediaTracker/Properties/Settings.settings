@@ -17,5 +17,11 @@
     <Setting Name="Root" Type="System.String" Scope="User">
       <Value Profile="(Default)">Root</Value>
     </Setting>
+    <Setting Name="AutoAdvance" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="ShowRandomSection" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -210,7 +210,7 @@ namespace MediaTracker
             List<string> toRemove = new List<string>();
             List<TrackTree> toUpdate = new List<TrackTree>();
             // get all current files and directories
-            toAdd.AddRange(Utilties.getAllFilesAbove(this.Path, 20));
+            toAdd.AddRange(Utilties.getAllFilesAbove(this.Path, 4));
             // filter all children into 
             Childrens.ForEach((child) =>
             {

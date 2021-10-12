@@ -4,7 +4,6 @@ C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\bin\Release\netcore
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\bin\Release\netcoreapp3.1\MediaTracker.runtimeconfig.dev.json
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\bin\Release\netcoreapp3.1\MediaTracker.dll
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\bin\Release\netcoreapp3.1\MediaTracker.pdb
-C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Release\netcoreapp3.1\MediaTracker.csproj.AssemblyReference.cache
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Release\netcoreapp3.1\MediaTracker.csproj.ResolveComReference.cache
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Release\netcoreapp3.1\MainWindow.g.cs
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Release\netcoreapp3.1\App.g.cs

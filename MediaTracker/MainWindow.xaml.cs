@@ -26,6 +26,7 @@ namespace MediaTracker
     /// </summary>
     public partial class MainWindow : Window
     {
+        private bool autoAdvanceOnOpen;
 
         private TreeViewItem[] savedItems;
 
@@ -47,6 +48,13 @@ namespace MediaTracker
             this.Width = Properties.Settings.Default.Width;
             this.Height = Properties.Settings.Default.Height;
             string root = Properties.Settings.Default.Root;
+            // set the settings
+            this.autoAdvanceSetting.IsChecked = Properties.Settings.Default.AutoAdvance;
+            this.autoAdvanceOnOpen = Properties.Settings.Default.AutoAdvance;
+            this.showRandomSectionSetting.IsChecked = Properties.Settings.Default.ShowRandomSection;
+            // if random file section is hidden, can have less minSize
+            if (!Properties.Settings.Default.ShowRandomSection)
+                this.showRandomSectionSetting_Checked(null, null);
             if (Directory.Exists(root))
                 this.setRoot(root);
         }
@@ -65,9 +73,13 @@ namespace MediaTracker
             // saves the window position and size
             Properties.Settings.Default.Top = this.Top;
             Properties.Settings.Default.Left = this.Left;
-            Properties.Settings.Default.Height = this.Height;
+            Properties.Settings.Default.Height = this.SettingsControl.IsExpanded? this.Height-40 : this.Height;
             Properties.Settings.Default.Width = this.Width;
             Properties.Settings.Default.Root = this.rootTextBox.Text;
+            // saves the settings
+            Properties.Settings.Default.AutoAdvance = this.autoAdvanceSetting.IsChecked == true? true:false;
+            Properties.Settings.Default.ShowRandomSection = this.showRandomSectionSetting.IsChecked == true ? true : false;
+
             Properties.Settings.Default.Save();
             // saves the tracker tree
             saveTrackTree();
@@ -119,7 +131,7 @@ namespace MediaTracker
 
         #endregion
 
-        #region textBox events
+        #region UI events
 
         /// <summary>
         /// open a folder browser dialog, set the new root as the one selected, and saves the old treeTracker beforehand
@@ -213,6 +225,54 @@ namespace MediaTracker
             this.selectedFolderText.Text = this.selectedFolder.Name;
             this.selectedFileText.Text = this.selectedFile.Name;
             this.selectedFileFolderText.Text = this.selectedFile.Parent.Name;
+        }
+
+        /// <summary>
+        /// set the autoAdvance flag, by the checkbox value
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void autoAdvanceSetting_Checked(object sender, RoutedEventArgs e)
+        {
+            this.autoAdvanceOnOpen = this.autoAdvanceSetting.IsChecked == true? true:false;
+        }
+
+        /// <summary>
+        /// hide/show the randomFile section according to the checkbox, also update the minHeight
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void showRandomSectionSetting_Checked(object sender, RoutedEventArgs e)
+        {
+            // update visibility
+            this.randomSection.Visibility = (this.showRandomSectionSetting.IsChecked == true)? Visibility.Visible: Visibility.Hidden;
+            // if visible, increse minHeight
+            if (this.randomSection.Visibility == Visibility.Visible)
+                this.MinHeight += 70;
+            // if hidden, decrese minHeight
+            else if (this.randomSection.Visibility == Visibility.Hidden)
+            {
+                var prevMinHeight = this.MinHeight;
+                this.MinHeight -= 70;
+                // update actual height if already was at minHeight
+                if (this.Height == prevMinHeight)
+                    this.Height -= 70;
+            }
+        }
+
+        /// <summary>
+        /// update the minHeight upon expansion\collapse of the settings
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SettingsControl_StateChange(object sender, RoutedEventArgs e)
+        {
+            var prevMinHeight = this.MinHeight;
+            // update minHeight
+            this.MinHeight += (this.SettingsControl.IsExpanded == true)? 40 : -40;
+            // update actual height if already was at minHeight
+            if (this.Height==prevMinHeight)
+                this.Height -= 40;
         }
 
         #endregion
@@ -367,11 +427,12 @@ namespace MediaTracker
             // if attenpt to open failed, do nothing
             try
             {
-                // if the sender is the openFile button, open the file and advance tracker to next file
+                // if the sender is the openFile button, open the file and advance tracker to next file (if autoAdvance is checked)
                 if (sender == this.OpenFileBtn)
                 {
                     Process.Start("explorer.exe", selectedFile.Path);
-                    this.ButtonClick_ChangeFile(this.NextFileBtn, null);
+                    if (this.autoAdvanceOnOpen)
+                        this.ButtonClick_ChangeFile(this.NextFileBtn, null);
                 }
                 // else if it was the openFolder button, open the file's folder (parent tree path)
                 else if (sender == this.OpenFolderBtn)
@@ -717,6 +778,5 @@ namespace MediaTracker
         }
 
         #endregion
-
     }
 }

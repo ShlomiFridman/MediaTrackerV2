@@ -66,7 +66,7 @@ namespace MediaTracker
             // initialize properties
             this.Info = new DirectoryInfo(directory);
             // get directory files and sub directories
-            this.FilesStrings = Utilties.getAllFilesAbove(directory, 20);
+            this.FilesStrings = Utilties.getAllFilesAbove(directory, 4);
             // if there are no valid files, index is -1
             if (this.FilesStrings.Count == 0)
                 this.index = -1;

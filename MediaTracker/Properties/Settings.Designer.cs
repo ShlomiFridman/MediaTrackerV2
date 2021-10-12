@@ -82,5 +82,29 @@ namespace MediaTracker.Properties {
                 this["Root"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AutoAdvance {
+            get {
+                return ((bool)(this["AutoAdvance"]));
+            }
+            set {
+                this["AutoAdvance"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ShowRandomSection {
+            get {
+                return ((bool)(this["ShowRandomSection"]));
+            }
+            set {
+                this["ShowRandomSection"] = value;
+            }
+        }
     }
 }

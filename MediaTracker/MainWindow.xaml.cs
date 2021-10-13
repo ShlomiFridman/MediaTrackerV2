@@ -508,14 +508,11 @@ namespace MediaTracker
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                lock (this.trackTree)
+                Dispatcher.Invoke(() =>
                 {
-                    Dispatcher.Invoke(() =>
-                    {
-                        this.trackTree.Childrens.ForEach((child) => setItems(this.TreeView.Items, child));
-                        Task.Run(() => checkTrees(trackTree));
-                    });
-                }
+                    trackTree.checkChildren();
+                    trackTree.Childrens.ForEach((child) => setItems(TreeView.Items, child));
+                });
             }).Start();
 
             // saves the new tree

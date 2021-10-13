@@ -15,7 +15,7 @@ namespace MediaTracker.MyClasses
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             // get the string value
-            string path = (string) value;
+            string path = (string)value;
             string image = null;  // default value
             // check if logical drive
             foreach (var logicalPath in Environment.GetLogicalDrives())
@@ -26,11 +26,16 @@ namespace MediaTracker.MyClasses
                 }
             // if not logical drive
             if (string.IsNullOrEmpty(image))
+            {
+                // if file\directory not found
+                if (!File.Exists(path) && !Directory.Exists(path))
+                    image = "notFound";
                 // if is directory
-                if (File.GetAttributes(path).HasFlag(FileAttributes.Directory))
+                else if (File.GetAttributes(path).HasFlag(FileAttributes.Directory))
                     image = "folder";   // is directory
                 else
                     image = "file";     // is file
+            }
             return new BitmapImage(new Uri($"pack://application:,,,/assets/images/{image}.png"));
         }
 

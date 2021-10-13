@@ -232,6 +232,11 @@ namespace MediaTracker
             Childrens.RemoveAll((child) => { return toRemove.Contains(child.Path); });
             // update already exist children, if one of the child needed updating, return true
             toUpdate.ForEach((child) => updateNeeded |= child.checkChildren());
+            // resort children
+            this.Childrens.Sort((childA, childB) =>
+            {
+                return childA.Name.ToLower().CompareTo(childB.Name.ToLower());
+            });
             // tree updated, return true if one of the children needed updating or this tree needed
             return updateNeeded | (toAdd.Count>0 || toRemove.Count>0);
         }

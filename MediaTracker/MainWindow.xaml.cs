@@ -248,7 +248,14 @@ namespace MediaTracker
             this.randomSection.Visibility = (this.showRandomSectionSetting.IsChecked == true)? Visibility.Visible: Visibility.Hidden;
             // if visible, increse minHeight
             if (this.randomSection.Visibility == Visibility.Visible)
+            {
+                // added the condition so the size won't change untill the TreeView was loaded
+                if (this.TreeView.Items.Count == 0)
+                    return;
                 this.MinHeight += 70;
+                // check if the new window size is out of bottom screen
+                checkOutOfBottomScreen();
+            }
             // if hidden, decrese minHeight
             else if (this.randomSection.Visibility == Visibility.Hidden)
             {
@@ -270,9 +277,25 @@ namespace MediaTracker
             var prevMinHeight = this.MinHeight;
             // update minHeight
             this.MinHeight += (this.SettingsControl.IsExpanded == true)? 40 : -40;
+            // check if the new window size is out of bottom screen
+            if (this.MinHeight > prevMinHeight)
+                checkOutOfBottomScreen();
             // update actual height if already was at minHeight
             if (this.Height==prevMinHeight)
                 this.Height -= 40;
+        }
+
+        /// <summary>
+        /// check if the window size is out of bottom screen,
+        /// if so will move it to be in bounds
+        /// </summary>
+        private void checkOutOfBottomScreen()
+        {
+
+            if (this.Top + this.Height >= SystemParameters.VirtualScreenHeight)
+            {
+                this.Top = SystemParameters.VirtualScreenHeight + SystemParameters.VirtualScreenTop - this.Height - 30;
+            }
         }
 
         #endregion
@@ -481,8 +504,19 @@ namespace MediaTracker
                 this.trackTree = new TrackTree(null, path);
                 this.saveTrackTree();
             }
-
-            this.trackTree.Childrens.ForEach((child) => this.setItems(this.TreeView.Items, child));
+            // set the children and check if the tree needs updating
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                lock (this.trackTree)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        this.trackTree.Childrens.ForEach((child) => setItems(this.TreeView.Items, child));
+                        Task.Run(() => checkTrees(trackTree));
+                    });
+                }
+            }).Start();
 
             // saves the new tree
             this.savedItems = new TreeViewItem[this.TreeView.Items.Count];

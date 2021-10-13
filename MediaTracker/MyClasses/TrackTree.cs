@@ -356,8 +356,8 @@ namespace MediaTracker
                 var tree = new TrackTree(null, reader, new FileInfo(path).DirectoryName); // initialize the root trackTree via reader
                 // loading successful, close reader and stream
                 reader.Close();
-                // check if the tree is up to date
-                tree.checkChildren();
+                // check if the tree is up to date, will be called in main window
+                //tree.checkChildren();
                 // return root
                 return tree;
             }

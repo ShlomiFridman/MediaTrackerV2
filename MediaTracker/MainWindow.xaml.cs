@@ -504,22 +504,23 @@ namespace MediaTracker
                 this.trackTree = new TrackTree(null, path);
                 this.saveTrackTree();
             }
-            // set the children and check if the tree needs updating
+            // starts the viewTree initialization and check if the trackTree needs updating
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 Dispatcher.Invoke(() =>
                 {
+                    // check if the tree needs updating
                     trackTree.checkChildren();
+                    // set the children
                     trackTree.Childrens.ForEach((child) => setItems(TreeView.Items, child));
+                    // saves the new tree
+                    this.savedItems = new TreeViewItem[this.TreeView.Items.Count];
+                    this.TreeView.Items.CopyTo(savedItems, 0);
+                    // set the selected folder as the one the root is pointing at
+                    selectFolder(this.trackTree.SelectedPath);
                 });
             }).Start();
-
-            // saves the new tree
-            this.savedItems = new TreeViewItem[this.TreeView.Items.Count];
-            this.TreeView.Items.CopyTo(savedItems, 0);
-            // set the selected folder as the one the root is pointing at
-            selectFolder(this.trackTree.SelectedPath);
         }
 
         /// <summary>

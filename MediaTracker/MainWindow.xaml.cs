@@ -201,9 +201,9 @@ namespace MediaTracker
                                 else
                                 {
                                     // readd the matching items to root
-                                    foreach (TreeViewItem item in this.savedItems)
+                                    foreach (TrackTree tree in this.trackTree.Childrens)
                                     {
-                                        searchTreeView(TreeView.Items, item, search.ToLower());
+                                        searchTreeView(TreeView.Items, tree, search.ToLower());
                                     }
                                 }
                             });
@@ -487,29 +487,28 @@ namespace MediaTracker
         /// <param name="path">new root path</param>
         private void setRoot(string path)
         {
-            path = Utilties.fixPath(path);
-            // clear previous items
-            TreeView.Items.Clear();
-            // set the textBox text
-            this.rootTextBox.Text = path;
-
-            // saves the old trackTree
-            this.saveTrackTree();
-
-            // load tracker, stored in root, if none found, create one and save
-            this.trackTree = TrackTree.load($"{path}/tracker.dat");
-            // if the load returned null (no trackTree)
-            if (this.trackTree == null)
-            {
-                this.trackTree = new TrackTree(null, path);
-                this.saveTrackTree();
-            }
-            // starts the viewTree initialization and check if the trackTree needs updating
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 Dispatcher.Invoke(() =>
                 {
+                    path = Utilties.fixPath(path);
+                    // clear previous items
+                    TreeView.Items.Clear();
+                    // set the textBox text
+                    this.rootTextBox.Text = path;
+
+                    // saves the old trackTree
+                    this.saveTrackTree();
+
+                    // load tracker, stored in root, if none found, create one and save
+                    this.trackTree = TrackTree.load($"{path}/tracker.dat");
+                    // if the load returned null (no trackTree)
+                    if (this.trackTree == null)
+                    {
+                        this.trackTree = new TrackTree(null, path);
+                        this.saveTrackTree();
+                    }
                     // check if the tree needs updating
                     trackTree.checkChildren();
                     // set the children
@@ -584,15 +583,28 @@ namespace MediaTracker
             // if the item is a directory, add all its children with size above 20mb, and set on left click event (selectFolder)
             if (tree.IsDirectory)
             {
+                // add selectFolder events
                 item.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.Path); };
-                item.KeyDown += (sender, e) => { 
+                item.KeyDown += (sender, e) => {
                     if (e.Key.Equals(Key.Enter))
                         selectFolder(tree.Path);
                 };
-                tree.Childrens.ForEach((child) =>
+                // add null item for the expend event
+                item.Items.Add(null);
+                // add expanded event
+                item.Expanded += (sender, e) =>
                 {
-                    setItems(item.Items, child);
-                });
+                    tree.Childrens.ForEach((child) =>
+                    {
+                        setItems(item.Items, child);
+                    });
+                    item.Items.Remove(null);
+                };
+                item.Collapsed += (sender, e) =>
+                {
+                    item.Items.Clear();
+                    item.Items.Add(null);
+                };
             }
             // else the item is a file, set the double click event (open file via explorer.exe)
             else
@@ -627,6 +639,8 @@ namespace MediaTracker
         /// <returns>TreeViewItem if the item was found, else null</returns>
         private TreeViewItem searchItem(TreeViewItem item, string path)
         {
+            if (item == null)
+                return null;
             // if is the right item, return it
             if (item.Tag.ToString().Equals(path))
                 return item;
@@ -740,16 +754,16 @@ namespace MediaTracker
         /// <param name="item"></param>
         /// <param name="searchString"></param>
         /// <returns></returns>
-        private bool searchTreeView(ItemCollection parent, TreeViewItem item, string searchString)
+        private bool searchTreeView(ItemCollection parent, TrackTree tree, string searchString)
         {
             bool flag = false;
-            var clone = cloneItem(item);
+            var clone = cloneItem(tree);
             // if current item's header matching, add to list
-            if (item.Header.ToString().ToLower().Contains(searchString)) 
+            if (tree.Name.ToLower().Contains(searchString)) 
                 flag = true;
             // search all subItems
-            foreach (TreeViewItem subItem in item.Items)
-                flag |= searchTreeView(clone.Items, subItem, searchString);
+            foreach (TrackTree childTree in tree.Childrens)
+                flag |= searchTreeView(clone.Items, childTree, searchString);
             if (flag)
             {
                 parent.Add(clone);
@@ -763,19 +777,28 @@ namespace MediaTracker
         /// </summary>
         /// <param name="item"></param>
         /// <returns>TreeViewItem clone</returns>
-        private TreeViewItem cloneItem(TreeViewItem item)
+        private TreeViewItem cloneItem(TrackTree tree)
         {
             // init clone
             var clone = new TreeViewItem()
             {
-                Header = item.Header,
-                Tag = item.Tag
+                Header = tree.Name,
+                Tag = tree.Path
             };
             // if file, set open on events
-            if (File.Exists(item.Tag.ToString()))
+            if (File.Exists(tree.Path))
             {
                 clone.MouseDoubleClick += this.onItemDoubleClick;
                 clone.KeyDown += this.onItemEnter;
+            }
+            // if directory, add select folder events
+            else if (Directory.Exists(tree.Path))
+            {
+                clone.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.Path); };
+                clone.KeyDown += (sender, e) => {
+                    if (e.Key.Equals(Key.Enter))
+                        selectFolder(tree.Path);
+                };
             }
             return clone;
         }

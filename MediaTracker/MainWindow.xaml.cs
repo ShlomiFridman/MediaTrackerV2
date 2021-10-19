@@ -510,7 +510,7 @@ namespace MediaTracker
                         this.saveTrackTree();
                     }
                     // check if the tree needs updating
-                    trackTree.checkChildren();
+                    trackTree.checkChildren(false);
                     // set the children
                     trackTree.Childrens.ForEach((child) => setItems(TreeView.Items, child));
                     // saves the new tree
@@ -580,7 +580,7 @@ namespace MediaTracker
             };
             // add the item to the parent
             parent.Add(item);
-            // if the item is a directory, add all its children with size above 20mb, and set on left click event (selectFolder)
+            // if the item is a directory, add events
             if (tree.IsDirectory)
             {
                 // add selectFolder events
@@ -589,24 +589,24 @@ namespace MediaTracker
                     if (e.Key.Equals(Key.Enter))
                         selectFolder(tree.Path);
                 };
-                // add null item for the expend event
+                // add null item for the expanded event
                 item.Items.Add(null);
                 // add expanded event
                 item.Expanded += (sender, e) =>
                 {
+                    // if already expanded, do nothing
+                    if (item.Items.Count != 1 || item.Items[0] != null)
+                        return;
+                    // remove null item
+                    item.Items.RemoveAt(0);
+                    // add real children
                     tree.Childrens.ForEach((child) =>
                     {
                         setItems(item.Items, child);
                     });
-                    item.Items.Remove(null);
-                };
-                item.Collapsed += (sender, e) =>
-                {
-                    item.Items.Clear();
-                    item.Items.Add(null);
                 };
             }
-            // else the item is a file, set the double click event (open file via explorer.exe)
+            // else the item is a file, set the file events (open file via explorer.exe)
             else
             {
                 item.MouseDoubleClick += this.onItemDoubleClick;
@@ -677,7 +677,7 @@ namespace MediaTracker
         /// <param name="trackTree"></param>
         private void checkTrees(TrackTree trackTree)
         {
-            if (trackTree.checkChildren())
+            if (trackTree.checkChildren(true))
             {
                 // if not the root, update the node
                 if (trackTree != this.trackTree)

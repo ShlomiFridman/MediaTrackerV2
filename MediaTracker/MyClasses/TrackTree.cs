@@ -197,8 +197,9 @@ namespace MediaTracker
         /// <summary>
         /// check if the children in this tree are up to date, if there are some that missing
         /// </summary>
+        /// <param name="updateChildren">if true, update children also</param>
         /// <returns>true if an updated was needed, else false</returns>
-        public bool checkChildren()
+        public bool checkChildren(bool updateChildren)
         {
             if (!this.IsDirectory)
                 return false;
@@ -230,13 +231,15 @@ namespace MediaTracker
             toAdd.ForEach((path) => this.Childrens.Add(new TrackTree(this, Utilties.getName(path))));
             // remove unFound paths
             Childrens.RemoveAll((child) => { return toRemove.Contains(child.Path); });
-            // update already exist children, if one of the child needed updating, return true
-            toUpdate.ForEach((child) => updateNeeded |= child.checkChildren());
-            // resort children
-            this.Childrens.Sort((childA, childB) =>
-            {
-                return childA.Name.ToLower().CompareTo(childB.Name.ToLower());
-            });
+            // if updateChildren is true update already exist children, if one of the children needed updating, return true
+            if (updateChildren)
+                toUpdate.ForEach((child) => updateNeeded |= child.checkChildren(updateChildren));
+            // if a new child was added, resort children
+            if (toAdd.Count > 0)
+                this.Childrens.Sort((childA, childB) =>
+                {
+                    return childA.Name.ToLower().CompareTo(childB.Name.ToLower());
+                });
             // tree updated, return true if one of the children needed updating or this tree needed
             return updateNeeded | (toAdd.Count>0 || toRemove.Count>0);
         }

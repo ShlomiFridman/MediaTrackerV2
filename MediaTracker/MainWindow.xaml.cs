@@ -408,6 +408,8 @@ namespace MediaTracker
                     this.selectedFile = this.selectedFile.Parent.getSelectedTree();
                     // set the textBox texts
                     this.updateText();
+                    // saves the updated trackTree, in case of an unexpected crash
+                    saveTrackTree();
                 }
             }
             catch (Exception exp)
@@ -455,7 +457,10 @@ namespace MediaTracker
                 {
                     Process.Start("explorer.exe", selectedFile.Path);
                     if (this.autoAdvanceOnOpen)
+                    {
+                        // advance to next file
                         this.ButtonClick_ChangeFile(this.NextFileBtn, null);
+                    }
                 }
                 // else if it was the openFolder button, open the file's folder (parent tree path)
                 else if (sender == this.OpenFolderBtn)
@@ -675,7 +680,7 @@ namespace MediaTracker
         /// if the tracktree is the root, and needed updating, will update the whole tree
         /// </summary>
         /// <param name="trackTree"></param>
-        private void checkTrees(TrackTree trackTree)
+        private bool checkTrees(TrackTree trackTree)
         {
             if (trackTree.checkChildren(true))
             {
@@ -703,7 +708,13 @@ namespace MediaTracker
                     this.savedItems = new TreeViewItem[this.TreeView.Items.Count];
                     this.TreeView.Items.CopyTo(savedItems, 0);
                 }
+                // saves the updated trackTree
+                saveTrackTree();
+                // return true, the trees were updated
+                return true;
             }
+            // no update was needed
+            return false;
         }
 
         /// <summary>
@@ -721,13 +732,20 @@ namespace MediaTracker
         /// saves the trackTree in a .dat file which will be located in the root path
         /// </summary>
         /// <returns>true if saved successfully, else false</returns>
-        private bool saveTrackTree()
+        private void saveTrackTree()
         {
             // the trackTree isn't initialize, do nothing, return true
             if (this.trackTree == null)
-                return true;
-            // save
-            return this.trackTree.save($"{this.trackTree.Path}/tracker.dat");
+                return;
+            // starts a new thread for the save
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                lock (this.trackTree)
+                {
+                    this.trackTree.save($"{this.trackTree.Path}/tracker.dat");
+                }
+            }).Start();
         }
 
         /*

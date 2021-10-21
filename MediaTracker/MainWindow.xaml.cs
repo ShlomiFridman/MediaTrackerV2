@@ -118,7 +118,7 @@ namespace MediaTracker
                 }
             }
             // if the queue is empty, return
-            if (this.keyQueue.Count == 0)
+            if (this.keyQueue==null || this.keyQueue.Count == 0)
                 return;
             // get the head
             tvi = this.keyQueue.Dequeue();

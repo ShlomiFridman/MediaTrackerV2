@@ -127,6 +127,9 @@ namespace MediaTracker
                     try
                     {
                         var childTracker = new TrackTree(this, reader,null);
+                        // if the child no longer exists, or is null, continue to the next
+                        if (childTracker == null || (!Directory.Exists(childTracker.Path) && !File.Exists(childTracker.Path)))
+                            continue;
                         this.Childrens.Add(childTracker);
                     } catch (Exception ex) { }
                 }

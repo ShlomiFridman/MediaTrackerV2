@@ -150,6 +150,17 @@ namespace MediaTracker
         }
 
         /// <summary>
+        /// calls the checkTrees function on the root, in order to refresh it
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void refreshTreeView_Click(object sender, RoutedEventArgs e)
+        {
+            // check if the tree is up to date
+            this.checkTrees(this.trackTree);
+        }
+
+        /// <summary>
         /// filter the root treeview items, shows only the items that their Header contains the search string
         /// if the search string is empty, shows all items
         /// </summary>

@@ -1,21 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+//using System.Text;
+//using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
+//using System.Windows.Data;
+//using System.Windows.Documents;
 using System.Windows.Input;
+/*
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+*/
 using System.IO;
 using System.Diagnostics;
 using System.Windows.Forms;
-using System.Timers;
+//using System.Timers;
 using System.Threading;
 using Button = System.Windows.Controls.Button;
 
@@ -41,6 +43,12 @@ namespace MediaTracker
 
         public MainWindow()
         {
+            // check if there an already running instance of the app, if so will alert the user and kill current instance
+            if (System.Diagnostics.Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location)).Count() > 1)
+            {
+                System.Windows.Forms.MessageBox.Show("Error, the application is already running","Failed to launch", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                System.Diagnostics.Process.GetCurrentProcess().Kill();
+            }
             InitializeComponent();
             // load Left, Top, Width, Height, and Root
             this.Left = Properties.Settings.Default.Left;

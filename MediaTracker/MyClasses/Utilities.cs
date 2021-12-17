@@ -64,6 +64,23 @@ namespace MediaTracker
             }
         }
 
+        public static string toHexString(string str)
+        {
+            byte[] raw = Encoding.Default.GetBytes(str);
+            return BitConverter.ToString(raw).Replace("-","");
+        }
+        /*
+        public static string fromHexString(string hex)
+        {
+            byte[] raw = new byte[hex.Length / 2];
+            for (int i=0; i < raw.Length; i++)
+            {
+                raw[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+            }
+            return Encoding.Default.GetString(raw);
+        }
+        */
+
         #region get Files\Folders methods
 
         /// <summary>

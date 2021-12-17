@@ -334,7 +334,7 @@ namespace MediaTracker
             try
             {
                 // if file's folder not found, throw exception, and update tree
-                if (!Directory.Exists(selectedFile.Parent.Path))
+                if (!Directory.Exists(selectedFile.Parent.FilePath))
                     throw new FileNotFoundException();
 
                 // check if the folder need updating
@@ -394,7 +394,7 @@ namespace MediaTracker
             try
             {
                 // if file not found, throw exception, and update tree
-                if (!File.Exists(selectedFile.Path))
+                if (!File.Exists(selectedFile.FilePath))
                     throw new FileNotFoundException();
                 // check if the folder need updating
                 checkTrees(this.selectedFile.Parent);
@@ -474,7 +474,7 @@ namespace MediaTracker
                 // if the sender is the openFile button, open the file and advance tracker to next file (if autoAdvance is checked)
                 if (sender == this.OpenFileBtn)
                 {
-                    Process.Start("explorer.exe", selectedFile.Path);
+                    Process.Start("explorer.exe", selectedFile.FilePath);
                     if (this.autoAdvanceOnOpen)
                     {
                         // advance to next file
@@ -483,10 +483,10 @@ namespace MediaTracker
                 }
                 // else if it was the openFolder button, open the file's folder (parent tree path)
                 else if (sender == this.OpenFolderBtn)
-                    Process.Start("explorer.exe", selectedFile.Parent.Path);
+                    Process.Start("explorer.exe", selectedFile.Parent.FilePath);
                 // else if it is openRandom, will open randomFile path
                 else if (this.randomFile != null && sender == this.OpenRandomBtn)
-                    Process.Start("explorer.exe", randomFile.Path);
+                    Process.Start("explorer.exe", randomFile.FilePath);
             }
             catch (Exception exception)
             {
@@ -526,15 +526,9 @@ namespace MediaTracker
                     this.saveTrackTree();
 
                     // load tracker, stored in root, if none found, create one and save
-                    this.trackTree = TrackTree.load($"{path}/tracker.dat");
-                    // if the load returned null (no trackTree)
-                    if (this.trackTree == null)
-                    {
-                        this.trackTree = new TrackTree(null, path);
-                        this.saveTrackTree();
-                    }
+                    this.trackTree = TrackTree.Load(path);
                     // check if the tree needs updating
-                    trackTree.checkChildren(false);
+                    // trackTree.checkChildren(false);
                     // set the children
                     trackTree.Childrens.ForEach((child) => setItems(TreeView.Items, child));
                     // saves the new tree
@@ -572,7 +566,7 @@ namespace MediaTracker
                 this.OpenFileBtn.Focus();
 
                 // if not root, changed selected in parent
-                if (selectedFolder.Path != trackTree.Path)
+                if (selectedFolder.FilePath != trackTree.FilePath)
                 {
                     // update the selected path
                     this.trackTree.setPathTo(selectedFolder);
@@ -600,7 +594,7 @@ namespace MediaTracker
             TreeViewItem item = new TreeViewItem()
             {
                 Header = tree.Name,
-                Tag = tree.Path
+                Tag = tree.FilePath
             };
             // add the item to the parent
             parent.Add(item);
@@ -608,10 +602,10 @@ namespace MediaTracker
             if (tree.IsDirectory)
             {
                 // add selectFolder events
-                item.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.Path); };
+                item.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.FilePath); };
                 item.KeyDown += (sender, e) => {
                     if (e.Key.Equals(Key.Enter))
-                        selectFolder(tree.Path);
+                        selectFolder(tree.FilePath);
                 };
                 // add null item for the expanded event
                 item.Items.Add(null);
@@ -706,7 +700,7 @@ namespace MediaTracker
                 // if not the root, update the node
                 if (trackTree != this.trackTree)
                 {
-                    TreeViewItem item = searchItem(trackTree.Path);
+                    TreeViewItem item = searchItem(trackTree.FilePath);
                     if (item != null)
                         this.updateTreeView(item, trackTree);
                 }
@@ -762,7 +756,8 @@ namespace MediaTracker
                 Thread.CurrentThread.IsBackground = true;
                 lock (this.trackTree)
                 {
-                    this.trackTree.save($"{this.trackTree.Path}/tracker.dat");
+                    //this.trackTree.save($"{this.trackTree.FilePath}/tracker.dat");
+                    this.trackTree.save();
                 }
             }).Start();
         }
@@ -820,21 +815,21 @@ namespace MediaTracker
             var clone = new TreeViewItem()
             {
                 Header = tree.Name,
-                Tag = tree.Path
+                Tag = tree.FilePath
             };
             // if file, set open on events
-            if (File.Exists(tree.Path))
+            if (File.Exists(tree.FilePath))
             {
                 clone.MouseDoubleClick += this.onItemDoubleClick;
                 clone.KeyDown += this.onItemEnter;
             }
             // if directory, add select folder events
-            else if (Directory.Exists(tree.Path))
+            else if (Directory.Exists(tree.FilePath))
             {
-                clone.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.Path); };
+                clone.PreviewMouseLeftButtonDown += (sender, e) => { selectFolder(tree.FilePath); };
                 clone.KeyDown += (sender, e) => {
                     if (e.Key.Equals(Key.Enter))
-                        selectFolder(tree.Path);
+                        selectFolder(tree.FilePath);
                 };
             }
             return clone;

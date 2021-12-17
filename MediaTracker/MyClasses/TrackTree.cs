@@ -34,7 +34,7 @@ namespace MediaTracker
         /// <summary>
         /// the full path of this tree
         /// </summary>
-        public string Path { private set; get; }
+        public string FilePath { private set; get; }
         /// <summary>
         /// the selected path of this tree, to which path this tree points at
         /// </summary>
@@ -48,7 +48,7 @@ namespace MediaTracker
             {
                 var tree = this.Childrens.Find((child) =>
                 {
-                    return this.SelectedPath.Equals(child.Path);
+                    return this.SelectedPath.Equals(child.FilePath);
                 });
                 return tree != null ? tree : this;
             }
@@ -72,26 +72,28 @@ namespace MediaTracker
         /// </summary>
         /// <param name="parent"></param>
         /// <param name="name"></param>
-        public TrackTree(TrackTree parent, string name)
+        private TrackTree(TrackTree parent, string name)
         {
             // inititalize properties
             this.Parent = parent;
             this.Name = name;
-            this.Path = (parent!=null)? $"{parent.Path}/{Name}":Name;
+            this.FilePath = (parent!=null)? $"{parent.FilePath}/{Name}":Name;
             // fix path, replace '/' with '\'
-            this.Path = Utilties.fixPath(this.Path);
+            this.FilePath = Utilties.fixPath(this.FilePath);
             this.Childrens = new List<TrackTree>(); // initalize children list
             // initialize IsDirectory flag
-            this.IsDirectory = File.GetAttributes(this.Path).HasFlag(FileAttributes.Directory);
+            this.IsDirectory = File.GetAttributes(this.FilePath).HasFlag(FileAttributes.Directory);
             // if directory initialize FilesList and children trees
             if (IsDirectory)
             {
-                this.Tracker = new TrackerList(Path);   // get files list
+                this.Tracker = new TrackerList(FilePath);   // get files list
                 // initalize children trees
                 Tracker.FilesInfo.ForEach((file) => this.Childrens.Add(new TrackTree(this, file.Name)));
             }
         }
 
+        /**
+         * old load constructor used that was used in the old load function
         /// <summary>
         /// initialize the tree with from the reader data, and the parent's info,
         /// if the path is a directory will initiate the children with the reader
@@ -110,9 +112,9 @@ namespace MediaTracker
             if (parent == null)
                 this.Name = root;
             // build the tree Path
-            this.Path = (parent != null) ? $"{parent.Path}\\{Name}" : Name;
+            this.FilePath = (parent != null) ? $"{parent.FilePath}\\{Name}" : Name;
             // if the folder/file no longer exists, return
-            if (!Directory.Exists(this.Path) && !File.Exists(this.Path))
+            if (!Directory.Exists(this.FilePath) && !File.Exists(this.FilePath))
                 return;
             this.Childrens = new List<TrackTree>(); // initalize children list
             // read IsDirectory flag
@@ -120,7 +122,7 @@ namespace MediaTracker
             // if IsDirectory, initialize children (via reader) and tracker
             if (IsDirectory)
             {
-                this.Tracker = new TrackerList(Path,reader.ReadString());
+                this.Tracker = new TrackerList(FilePath,reader.ReadString());
                 int count = reader.ReadInt32();
                 for (int ind = 0; ind < count; ind++)
                 {
@@ -128,12 +130,43 @@ namespace MediaTracker
                     {
                         var childTracker = new TrackTree(this, reader,null);
                         // if the child no longer exists, or is null, continue to the next
-                        if (childTracker == null || (!Directory.Exists(childTracker.Path) && !File.Exists(childTracker.Path)))
+                        if (childTracker == null || (!Directory.Exists(childTracker.FilePath) && !File.Exists(childTracker.FilePath)))
                             continue;
                         this.Childrens.Add(childTracker);
                     } catch (Exception ex) { }
                 }
             }
+        }
+        */
+
+        /// <summary>
+        /// a constructor used for the static load function, for a file
+        /// </summary>
+        /// <param name="parent">the parent's path</param>
+        /// <param name="name">the file's name</param>
+        private TrackTree(string parent, string name)
+        {
+            // create the path
+            this.FilePath = $"{parent}\\{name}";
+            this.Name = name;
+            // if the path does not exists, throw exception
+            if (!Directory.Exists(this.FilePath) && !File.Exists(this.FilePath))
+                throw new FileNotFoundException("File not found, can not create TrackTree");
+        }
+        /// <summary>
+        /// a constructor used for the static load function, for a directory
+        /// </summary>
+        /// <param name="parent">the parent's path</param>
+        /// <param name="name">the directory's name</param>
+        /// <param name="selected">the selected file's name</param>
+        private TrackTree(string parent, string name, string selected) : this(parent,name)
+        {
+            // only directories have selected
+            this.IsDirectory = true;
+            // initalize children list
+            this.Childrens = new List<TrackTree>(); 
+            // if directory, initialize tracker
+            this.Tracker = new TrackerList(this.FilePath, selected);
         }
 
         #endregion
@@ -148,10 +181,10 @@ namespace MediaTracker
         public TrackTree search(string path)
         {
             // if this.Path equal the path given, return true
-            if (this.Path.Equals(path))
+            if (this.FilePath.Equals(path))
                 return this;
             // if IsDirectory is false, or this.Path isn't in the path given, return false, the given path is not in this route
-            else if (!IsDirectory || !path.Contains(this.Path))
+            else if (!IsDirectory || !path.Contains(this.FilePath))
                 return null;
             TrackTree result = null;  // end result of children
             // search each child for the path
@@ -179,7 +212,7 @@ namespace MediaTracker
                 return true;
             // else if this is a file, or the destination does not comtains the this.Path, return false
             // the destination is not on this tree, no need to continue search
-            else if (!IsDirectory || !dest.Path.Contains(this.Path))
+            else if (!IsDirectory || !dest.FilePath.Contains(this.FilePath))
                 return false;
             // search each child for the one that contain the destination
             foreach (var child in Childrens)
@@ -188,7 +221,7 @@ namespace MediaTracker
                 if (child.setPathTo(dest))
                 {
                     // point this.Tracker.selected at the child
-                    this.Tracker.SelectedPath = child.Path;
+                    this.Tracker.SelectedPath = child.FilePath;
                     // returning true, that this tree contains the path
                     return true;
                 }
@@ -208,32 +241,32 @@ namespace MediaTracker
                 return false;
             bool updateNeeded = false;
             // update this tracker
-            this.Tracker = new TrackerList(this.Path, this.SelectedTree.Name);
+            this.Tracker = new TrackerList(this.FilePath, this.SelectedTree.Name);
             // init lists
             List<string> toAdd = new List<string>();
             List<string> toRemove = new List<string>();
             List<TrackTree> toUpdate = new List<TrackTree>();
             // get all current files and directories
-            toAdd.AddRange(Utilties.getAllFilesAbove(this.Path, 4));
+            toAdd.AddRange(Utilties.getAllFilesAbove(this.FilePath, 4));
             // filter all children into 
             Childrens.ForEach((child) =>
             {
                 // child still exists, check if need updating
-                if (toAdd.Contains(child.Path))
+                if (toAdd.Contains(child.FilePath))
                 {
                     // no need to reAdd the child
-                    toAdd.Remove(child.Path);
+                    toAdd.Remove(child.FilePath);
                     // to to update list
                     toUpdate.Add(child);
                 }
                 else
                     // the child not found, to be removed later
-                    toRemove.Add(child.Path);
+                    toRemove.Add(child.FilePath);
             });
             // add missing paths
             toAdd.ForEach((path) => this.Childrens.Add(new TrackTree(this, Utilties.getName(path))));
             // remove unFound paths
-            Childrens.RemoveAll((child) => { return toRemove.Contains(child.Path); });
+            Childrens.RemoveAll((child) => { return toRemove.Contains(child.FilePath); });
             // if updateChildren is true update already exist children, if one of the children needed updating, return true
             if (updateChildren)
                 toUpdate.ForEach((child) => updateNeeded |= child.checkChildren(updateChildren));
@@ -258,7 +291,7 @@ namespace MediaTracker
         {
             // if this tree is a of a file, or the directory is empty, return this.Path
             if (!IsDirectory || this.IsEmpty)
-                return this.Path;
+                return this.FilePath;
             // find the selected child, and get it's selected, return end result
             return this.SelectedTree.getSelected();
         }
@@ -292,6 +325,63 @@ namespace MediaTracker
 
         #region save
 
+        public bool save()
+        {
+            try
+            {
+                // get the directory of the current root in appData saves, if there is non it will be created
+                var dir = Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MediaTracker", Utilties.toHexString(this.FilePath)));
+                // get all the dir files
+                var fiArray = dir.GetFiles();
+                // sort them by creationDate
+                Array.Sort(fiArray, (a, b) =>
+                {
+                    return b.CreationTime.CompareTo(a.CreationTime);
+                });
+                BinaryWriter writer;
+                // if the latest file wasn't created today, create new file
+                if (fiArray.Length == 0 || fiArray[fiArray.Length - 1].CreationTime.CompareTo(DateTime.Today) < 0)
+                {
+                    // create the new file
+                    var saveFile = File.Create(Path.Combine(dir.FullName, $"{DateTime.Today.ToString("yyyy-MM-dd")} Tracker.dat"));
+                    // init writer with the new file
+                    writer = new BinaryWriter(saveFile);
+                }
+                else
+                    // init writer with today's file
+                    writer = new BinaryWriter(fiArray[fiArray.Length - 1].OpenWrite());
+
+                // saves the final selected, for the user
+                writer.Write($"{this.getSelected()}\n");
+                // saves the tree
+                this.save(writer);
+                // flush and close writer
+                writer.Flush();
+                writer.Close();
+
+                // if there are over 30 save files, delete the oldests
+                for (int i = 0; i < fiArray.Length - 30; i++)
+                    try
+                    {
+                        // tries to open file to use, if throws exception the file is in use and will not be deleted
+                        using (FileStream stream = fiArray[i].Open(FileMode.Open, FileAccess.Read, FileShare.None))
+                        {
+                            stream.Close();
+                        }
+                        // the file is not in use, ok to delete
+                        fiArray[i].Delete();
+                    }
+                    catch (Exception e) {
+                        
+                    }
+                return true;
+            }
+            catch (Exception e) { }
+            return false;
+        }
+
+        /*
+         *  the old save function
         /// <summary>
         /// initialize the trackTree save to given path, expects a path to a .dat file,
         /// if the file does not exists it will be created and flagged as hidden
@@ -318,6 +408,7 @@ namespace MediaTracker
             writer.Close(); // close writer and stream
             return flag;    // return save result
         }
+        */
 
         /// <summary>
         /// recursive save via the writer given,
@@ -349,22 +440,24 @@ namespace MediaTracker
         #endregion
 
         #region static load method
-
+        /*
+         * the old load function 
         /// <summary>
         /// load a Tracktree, from given path,
         /// expects a .dat file, with the same format as the save method
         /// </summary>
-        /// <param name="path">path to a .dat file containing the trackTree</param>
+        /// <param name="root">path to a .dat file containing the trackTree</param>
         /// <returns>TrackTree if the load was successful, else null</returns>
-        public static TrackTree load(string path)
+        public static TrackTree load(string root)
         {
             // if any error occurs during the load, will return null
             try
             {
                 // create the reader, may throw fileNotExists error
-                BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open));
+                BinaryReader reader = new BinaryReader(File.Open(root, FileMode.Open));
                 reader.ReadString();    // read the selected file string
-                var tree = new TrackTree(null, reader, new FileInfo(path).DirectoryName); // initialize the root trackTree via reader
+                // TODO check if root exists
+                var tree = new TrackTree(null, reader, new FileInfo(root).DirectoryName); // initialize the root trackTree via reader
                 // loading successful, close reader and stream
                 reader.Close();
                 // return root
@@ -374,6 +467,183 @@ namespace MediaTracker
             {
                 // an error occured, return null
                 return null;
+            }
+        }
+        */
+
+        /// <summary>
+        /// load trackTree of the given root, if there isn't a save, will create a new Track tree
+        /// </summary>
+        /// <param name="root"></param>
+        /// <returns></returns>
+        public static TrackTree Load(string root)
+        {
+            // if any error occurs during the load, will return null
+            try
+            {
+                string rootPath = Path.GetFullPath(root);
+                // if root does not exists, or is not a folder, return null
+                if (!Directory.Exists(rootPath))
+                {
+                    throw new DirectoryNotFoundException();
+                }
+
+                // get the directory of the root in appData saves, if there is non it will be created
+                var dir = Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MediaTracker", Utilties.toHexString(rootPath)));
+                // get all the dir files
+                var fiArray = dir.GetFiles();
+                // sort them by creationDate
+                Array.Sort(fiArray, (a, b) =>
+                {
+                    return b.CreationTime.CompareTo(a.CreationTime);
+                });
+                BinaryReader reader;
+                // get the latest file
+                if (fiArray.Length >0 )
+                {
+                    // init the reader with it
+                    reader = new BinaryReader(fiArray[fiArray.Length - 1].OpenRead());
+                }
+                else
+                {
+                    // there is no save file for the root, init a new tree
+                    TrackTree nullTree = null;  // need TrackTree null value for the constractur
+                    TrackTree newRoot = new TrackTree(nullTree, rootPath);  // create a new tree
+                    newRoot.save(); // saves it
+                    return newRoot;
+                }
+                // init tree via the save file
+                
+                // flush the final selected file, its only for the user's convenience
+                reader.ReadString();
+                // flush the root's name
+                reader.ReadString();
+                // flush the Isdirectory value, root is always a directory
+                reader.ReadBoolean();
+                // read the root selected child
+                string rootSelected = reader.ReadString();
+                // initialize the rootTree
+                TrackTree rootTree = new TrackTree(Directory.GetParent(rootPath).FullName, Path.GetFileName(rootPath), rootSelected);
+                // get children count
+                int count = reader.ReadInt32();
+
+                // read children
+                while (count-- > 0)
+                    recLoad(rootTree, reader);
+
+                // loading successful, close reader and stream
+                reader.Close();
+                // return root
+                return rootTree;
+            }
+            catch (Exception e)
+            {
+
+                throw e;
+            }
+        }
+
+        /// <summary>
+        /// recursive load function to read the tree's data and init it,
+        /// if all went well the tree will be added to its parent children, else the tree will be flushed along with its children
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <param name="reader"></param>
+        /// <returns></returns>
+        private static bool recLoad(TrackTree parent, BinaryReader reader)
+        {
+            // if at end of stream, throw error, its not suppose to happen
+            if (reader.BaseStream.Position == reader.BaseStream.Length)
+                throw new EndOfStreamException();
+            // read the file/dir name
+            string name = reader.ReadString();
+            // read if directory
+            bool isDirectory = reader.ReadBoolean();
+            // check if the tree exists, if not flush the tree and its children, they no longer exists
+            if (!isDirectory && !File.Exists(Path.Combine(parent.FilePath, name)))
+            {
+                // if the tree is directory, will flush all its children
+                if (isDirectory)
+                {
+                    // flush this tree's selected
+                    reader.ReadString();
+                    // read this tree's children count
+                    int count = reader.ReadInt32();
+                    // flush children
+                    while (count-- > 0)
+                        flushLoad(reader);
+                }
+                return false;
+            }
+            // else init tree and its children
+            else if (isDirectory)
+            {
+                // read this tree's selected
+                string selected = reader.ReadString();
+                // create a directory tree
+                TrackTree tree = new TrackTree(parent.FilePath, name, selected);
+                // add tree to parent's children, and set the parent
+                parent.Childrens.Add(tree);
+                tree.Parent = parent;
+                // initialize children
+                int count = reader.ReadInt32();
+                while (count-- > 0)
+                    recLoad(tree, reader);
+
+                // get all the directory files from tracker
+                var dirFiles = tree.Tracker.FilesInfo;
+                bool needSorting = false;
+                // check each file
+                dirFiles.ForEach(file =>
+                {
+                    // if the file is not in the tree's children it will be created and added
+                    if (tree.Childrens.Find(child => child.FilePath.Equals(file.FullName)) == null)
+                    {
+                        // create and add the child
+                        tree.Childrens.Add(new TrackTree(tree, file.Name));
+                        // the children need sorting
+                        needSorting = true;
+                    }
+                });
+                if (needSorting)
+                    tree.Childrens.Sort((a, b) =>
+                    {
+                        return a.Name.CompareTo(b.Name);
+                    });
+            }
+            else
+            {
+                // create a file tree
+                TrackTree tree = new TrackTree(parent.FilePath, name);
+                // add tree to parent's children, and set the parent
+                parent.Childrens.Add(tree);
+                tree.Parent = parent;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// flush the tree data from the reader, used when the file/directory no longer exists
+        /// </summary>
+        /// <param name="reader"></param>
+        private static void flushLoad(BinaryReader reader)
+        {
+            // if at end of stream, throw error, its not suppose to happen
+            if (reader.BaseStream.Position == reader.BaseStream.Length)
+                throw new EndOfStreamException();
+            // flush name
+            reader.ReadString();
+            // read isDirectory
+            bool isDirectory = reader.ReadBoolean();
+            if (isDirectory)
+            {
+                // flush selected
+                reader.ReadString();
+                // read children count
+                int count = reader.ReadInt32();
+                // flush each child
+                while (count-- > 0)
+                    flushLoad(reader);
             }
         }
 

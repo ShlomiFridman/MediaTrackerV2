@@ -525,7 +525,7 @@ namespace MediaTracker
                     // saves the old trackTree
                     this.saveTrackTree();
 
-                    // load tracker, stored in root, if none found, create one and save
+                    // load new trackTree
                     this.trackTree = TrackTree.Load(path);
                     // check if the tree needs updating
                     // trackTree.checkChildren(false);
@@ -742,7 +742,7 @@ namespace MediaTracker
         }
 
         /// <summary>
-        /// saves the trackTree in a .dat file which will be located in the root path
+        /// saves the trackTree in appData/MediaTracker/'hexRoot'/
         /// </summary>
         /// <returns>true if saved successfully, else false</returns>
         private void saveTrackTree()
@@ -756,7 +756,6 @@ namespace MediaTracker
                 Thread.CurrentThread.IsBackground = true;
                 lock (this.trackTree)
                 {
-                    //this.trackTree.save($"{this.trackTree.FilePath}/tracker.dat");
                     this.trackTree.save();
                 }
             }).Start();

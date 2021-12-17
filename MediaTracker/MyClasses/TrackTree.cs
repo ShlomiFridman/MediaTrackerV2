@@ -531,6 +531,27 @@ namespace MediaTracker
                 while (count-- > 0)
                     recLoad(rootTree, reader);
 
+                // get all the directory files from tracker
+                var dirFiles = rootTree.Tracker.FilesInfo;
+                bool needSorting = false;
+                // check each file
+                dirFiles.ForEach(file =>
+                {
+                    // if the file is not in the tree's children it will be created and added
+                    if (rootTree.Childrens.Find(child => child.FilePath.Equals(file.FullName)) == null)
+                    {
+                        // create and add the child
+                        rootTree.Childrens.Add(new TrackTree(rootTree, file.Name));
+                        // the children need sorting
+                        needSorting = true;
+                    }
+                });
+                if (needSorting)
+                    rootTree.Childrens.Sort((a, b) =>
+                    {
+                        return a.Name.CompareTo(b.Name);
+                    });
+
                 // loading successful, close reader and stream
                 reader.Close();
                 // return root

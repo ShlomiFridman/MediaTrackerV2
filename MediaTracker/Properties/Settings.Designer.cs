@@ -98,12 +98,12 @@ namespace MediaTracker.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool ShowRandomSection {
+        public bool RandomExpanded {
             get {
-                return ((bool)(this["ShowRandomSection"]));
+                return ((bool)(this["RandomExpanded"]));
             }
             set {
-                this["ShowRandomSection"] = value;
+                this["RandomExpanded"] = value;
             }
         }
     }

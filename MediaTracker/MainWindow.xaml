@@ -143,10 +143,6 @@
                                   Checked="autoAdvanceSetting_Checked"
                                   Unchecked="autoAdvanceSetting_Checked"
                                   />
-                        <CheckBox x:Name="showRandomSectionSetting" Content="Show Random File Section" Margin="2"
-                                  Checked="showRandomSectionSetting_Checked"
-                                  Unchecked="showRandomSectionSetting_Checked"
-                                  />
                     </StackPanel>
                 </Expander>
                 <!-- selected folder -->
@@ -203,23 +199,25 @@
                             Style="{StaticResource ControlBtn}"/>
                 </StackPanel>
                 <!-- Random File buttons -->
-                <StackPanel x:Name="randomSection">
-                    <TextBlock Margin="0 5 0 0" Text="Random File" TextAlignment="Center" />
-                    <TextBox x:Name="RandomText" Style="{StaticResource infoInput}" Margin="10 4"
+                <Expander Header="Random File" x:Name="randomExpander" IsExpanded="True" Margin="0 5 0 0"
+                          Expanded="randomExpander_Toggled" Collapsed="randomExpander_Toggled">
+                    <StackPanel>
+                        <TextBox x:Name="RandomText" Style="{StaticResource infoInput}" Margin="10 4"
                              Grid.Column="2"/>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Style="{StaticResource ControlBtn}" Content="Generate" Width="65"
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource ControlBtn}" Content="Generate" Width="65"
                             Grid.Column="1" Click="GenRandomBtn_Click"/>
-                        <Button x:Name="OpenRandomBtn" Style="{StaticResource ControlBtn}" Content="Open"
+                            <Button x:Name="OpenRandomBtn" Style="{StaticResource ControlBtn}" Content="Open"
                             Grid.Column="2" Click="ButtonClick_open"/>
-                    </Grid>
-                </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Expander>
             </StackPanel>
         </Grid>
     </Border>

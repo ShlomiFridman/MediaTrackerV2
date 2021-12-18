@@ -59,10 +59,9 @@ namespace MediaTracker
             // set the settings
             this.autoAdvanceSetting.IsChecked = Properties.Settings.Default.AutoAdvance;
             this.autoAdvanceOnOpen = Properties.Settings.Default.AutoAdvance;
-            this.showRandomSectionSetting.IsChecked = Properties.Settings.Default.ShowRandomSection;
-            // if random file section is hidden, can have less minSize
-            if (!Properties.Settings.Default.ShowRandomSection)
-                this.showRandomSectionSetting_Checked(null, null);
+            this.randomExpander.IsExpanded = Properties.Settings.Default.RandomExpanded;
+            if (!this.randomExpander.IsExpanded)
+                this.MinHeight -= 40;
             if (Directory.Exists(root))
                 this.setRoot(root);
         }
@@ -86,7 +85,7 @@ namespace MediaTracker
             Properties.Settings.Default.Root = this.rootTextBox.Text;
             // saves the settings
             Properties.Settings.Default.AutoAdvance = this.autoAdvanceSetting.IsChecked == true? true:false;
-            Properties.Settings.Default.ShowRandomSection = this.showRandomSectionSetting.IsChecked == true ? true : false;
+            Properties.Settings.Default.RandomExpanded = this.randomExpander.IsExpanded;
 
             Properties.Settings.Default.Save();
             // saves the tracker tree
@@ -261,29 +260,18 @@ namespace MediaTracker
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showRandomSectionSetting_Checked(object sender, RoutedEventArgs e)
+        private void randomExpander_Toggled(object sender, RoutedEventArgs e)
         {
-            // update visibility
-            this.randomSection.Visibility = (this.showRandomSectionSetting.IsChecked == true)? Visibility.Visible: Visibility.Hidden;
-            // if visible, increse minHeight
-            if (this.randomSection.Visibility == Visibility.Visible)
-            {
-                // added the condition so the size won't change untill the TreeView was loaded
-                if (this.TreeView.Items.Count == 0)
-                    return;
-                this.MinHeight += 70;
-                // check if the new window size is out of bottom screen
+            // if the tree wasn't initialized, then the function was called when the expended value was first set, no need to change the height
+            if (this.trackTree == null) return;
+            // update minHeight value based on current state
+            this.MinHeight += (this.randomExpander.IsExpanded)? 40:-40;
+            // if collapsed decrease height
+            if (!this.randomExpander.IsExpanded)
+                this.Height -= 40;
+            // else check if the window is out of bounds
+            else
                 checkOutOfBottomScreen();
-            }
-            // if hidden, decrese minHeight
-            else if (this.randomSection.Visibility == Visibility.Hidden)
-            {
-                var prevMinHeight = this.MinHeight;
-                this.MinHeight -= 70;
-                // update actual height if already was at minHeight
-                if (this.Height == prevMinHeight)
-                    this.Height -= 70;
-            }
         }
 
         /// <summary>
@@ -313,7 +301,7 @@ namespace MediaTracker
 
             if (this.Top + this.Height >= SystemParameters.VirtualScreenHeight)
             {
-                this.Top = SystemParameters.VirtualScreenHeight + SystemParameters.VirtualScreenTop - this.Height - 30;
+                this.Top = SystemParameters.VirtualScreenHeight + SystemParameters.VirtualScreenTop - this.Height - 35;
             }
         }
 
@@ -864,5 +852,6 @@ namespace MediaTracker
         }
 
         #endregion
+
     }
 }

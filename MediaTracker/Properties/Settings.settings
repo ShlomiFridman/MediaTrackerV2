@@ -20,7 +20,7 @@
     <Setting Name="AutoAdvance" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
-    <Setting Name="ShowRandomSection" Type="System.Boolean" Scope="User">
+    <Setting Name="RandomExpanded" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>

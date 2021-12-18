@@ -336,7 +336,7 @@ namespace MediaTracker
                 // sort them by creationDate
                 Array.Sort(fiArray, (a, b) =>
                 {
-                    return b.CreationTime.CompareTo(a.CreationTime);
+                    return a.CreationTime.CompareTo(b.CreationTime);
                 });
                 BinaryWriter writer;
                 // if the latest file wasn't created today, create new file
@@ -478,90 +478,92 @@ namespace MediaTracker
         /// <returns></returns>
         public static TrackTree Load(string root)
         {
-            // if any error occurs during the load, will return null
-            try
+            string rootPath = Path.GetFullPath(root);
+            // check if the root exists
+            if (!Directory.Exists(rootPath))
             {
-                string rootPath = Path.GetFullPath(root);
-                // if root does not exists, or is not a folder, return null
-                if (!Directory.Exists(rootPath))
-                {
-                    throw new DirectoryNotFoundException();
-                }
+                // if not throw an exception
+                throw new DirectoryNotFoundException();
+            }
 
-                // get the directory of the root in appData saves, if there is non it will be created
-                var dir = Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MediaTracker", Utilties.toHexString(rootPath)));
-                // get all the dir files
-                var fiArray = dir.GetFiles();
-                // sort them by creationDate
-                Array.Sort(fiArray, (a, b) =>
+            // get the directory of the root in appData saves, if there is non it will be created
+            var dir = Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MediaTracker", Utilties.toHexString(rootPath)));
+            // get all the dir files
+            var fiArray = dir.GetFiles();
+            // sort them by creationDate
+            Array.Sort(fiArray, (a, b) =>
+            {
+                return a.CreationTime.CompareTo(b.CreationTime);
+            });
+            // initiate the reader as null
+            BinaryReader reader = null;
+            // set the index of lastest save file
+            int lastSaveFileInd = fiArray.Length - 1;
+            // try to read it, if not succeed try the previous one
+            while (lastSaveFileInd >= 0)
+            {
+                try
                 {
-                    return b.CreationTime.CompareTo(a.CreationTime);
-                });
-                BinaryReader reader;
-                // get the latest file
-                if (fiArray.Length >0 )
-                {
-                    // init the reader with it
-                    reader = new BinaryReader(fiArray[fiArray.Length - 1].OpenRead());
-                }
-                else
-                {
-                    // there is no save file for the root, init a new tree
-                    TrackTree nullTree = null;  // need TrackTree null value for the constractur
-                    TrackTree newRoot = new TrackTree(nullTree, rootPath);  // create a new tree
-                    newRoot.save(); // saves it
-                    return newRoot;
-                }
-                // init tree via the save file
-                
-                // flush the final selected file, its only for the user's convenience
-                reader.ReadString();
-                // flush the root's name
-                reader.ReadString();
-                // flush the Isdirectory value, root is always a directory
-                reader.ReadBoolean();
-                // read the root selected child
-                string rootSelected = reader.ReadString();
-                // initialize the rootTree
-                TrackTree rootTree = new TrackTree(Directory.GetParent(rootPath).FullName, Path.GetFileName(rootPath), rootSelected);
-                // get children count
-                int count = reader.ReadInt32();
+                    // initialize the reader
+                    reader = new BinaryReader(fiArray[lastSaveFileInd].OpenRead());
+                    // init tree via the save file
 
-                // read children
-                while (count-- > 0)
-                    recLoad(rootTree, reader);
+                    // flush the final selected file, its only for the user's convenience
+                    reader.ReadString();
+                    // flush the root's name
+                    reader.ReadString();
+                    // flush the Isdirectory value, root is always a directory
+                    reader.ReadBoolean();
+                    // read the root selected child
+                    string rootSelected = reader.ReadString();
+                    // initialize the rootTree
+                    TrackTree rootTree = new TrackTree(Directory.GetParent(rootPath).FullName, Path.GetFileName(rootPath), rootSelected);
+                    // get children count
+                    int count = reader.ReadInt32();
 
-                // get all the directory files from tracker
-                var dirFiles = rootTree.Tracker.FilesInfo;
-                bool needSorting = false;
-                // check each file
-                dirFiles.ForEach(file =>
-                {
-                    // if the file is not in the tree's children it will be created and added
-                    if (rootTree.Childrens.Find(child => child.FilePath.Equals(file.FullName)) == null)
+                    // read children
+                    while (count-- > 0)
+                        recLoad(rootTree, reader);
+
+                    // get all the directory files from tracker
+                    var dirFiles = rootTree.Tracker.FilesInfo;
+                    bool needSorting = false;
+                    // check each file
+                    dirFiles.ForEach(file =>
                     {
-                        // create and add the child
-                        rootTree.Childrens.Add(new TrackTree(rootTree, file.Name));
-                        // the children need sorting
-                        needSorting = true;
-                    }
-                });
-                if (needSorting)
-                    rootTree.Childrens.Sort((a, b) =>
-                    {
-                        return a.Name.CompareTo(b.Name);
+                        // if the file is not in the tree's children it will be created and added
+                        if (rootTree.Childrens.Find(child => child.FilePath.Equals(file.FullName)) == null)
+                        {
+                            // create and add the child
+                            rootTree.Childrens.Add(new TrackTree(rootTree, file.Name));
+                            // the children need sorting
+                            needSorting = true;
+                        }
                     });
+                    if (needSorting)
+                        rootTree.Childrens.Sort((a, b) =>
+                        {
+                            return a.Name.CompareTo(b.Name);
+                        });
 
-                // loading successful, close reader and stream
-                reader.Close();
-                // return root
-                return rootTree;
+                    // loading successful, close reader and stream
+                    reader.Close();
+                    // return root
+                    return rootTree;
+                } catch (Exception e)
+                {
+                    // an exception was thrown, cannot open save file or the file was corrupted
+                    // closing the reader
+                    reader.Close();
+                    // moving the index to the previous save file
+                    lastSaveFileInd--;
+                }
             }
-            catch (Exception e)
-            {
-
-                throw e;
-            }
+            // there is no valid save file for the root, init a new tree
+            TrackTree nullTree = null;  // need TrackTree null value for the constractur
+            TrackTree newRoot = new TrackTree(nullTree, rootPath);  // create a new tree
+            newRoot.save(); // saves it
+            return newRoot;
         }
 
         /// <summary>

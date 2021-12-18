@@ -514,7 +514,15 @@ namespace MediaTracker
                     this.saveTrackTree();
 
                     // load new trackTree
-                    this.trackTree = TrackTree.Load(path);
+                    try
+                    {
+                        this.trackTree = TrackTree.Load(path);
+                    } catch (DirectoryNotFoundException dirException)
+                    {
+                        // the root the user entered is invalid, alerting the user and ending the setRoot
+                        System.Windows.Forms.MessageBox.Show("Error, Invalid root", "The root is invalid", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        return;
+                    }
                     // check if the tree needs updating
                     // trackTree.checkChildren(false);
                     // set the children

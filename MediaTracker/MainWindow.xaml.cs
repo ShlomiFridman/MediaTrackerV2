@@ -175,6 +175,19 @@ namespace MediaTracker
         /// <param name="e"></param>
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
+            // set the visibilty of clearSearchBox button
+            if (string.IsNullOrEmpty(searchTextBox.Text))
+            {
+                clearSearchBoxBtn.Visibility = Visibility.Hidden;
+                Grid.SetColumn(refreshBtn, 2);
+            }
+            // else its not empty, display clear button
+            else
+            {
+                clearSearchBoxBtn.Visibility = Visibility.Visible;
+                Grid.SetColumn(refreshBtn, 3);
+            }
+
             // check if the timer is initialized
             // if so will reset the timer
             if (this.searchTimer != null)
@@ -232,7 +245,20 @@ namespace MediaTracker
                 };
                 // start the timer after initialization, it will run in a second
                 this.searchTimer.Start();
+
             }
+        }
+
+        /// <summary>
+        /// clears the search box, and hide the clear button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void clearSearchBoxBtn_Click(object sender, RoutedEventArgs e)
+        {
+            this.searchTextBox.Text = string.Empty;
+            this.clearSearchBoxBtn.Visibility = Visibility.Hidden;
+            Grid.SetColumn(refreshBtn, 2);
         }
 
         /// <summary>

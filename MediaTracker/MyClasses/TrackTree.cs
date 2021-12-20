@@ -38,7 +38,9 @@ namespace MediaTracker
         /// <summary>
         /// the selected path of this tree, to which path this tree points at
         /// </summary>
-        public string SelectedPath { get { return this.Tracker.SelectedPath; } }
+        public string SelectedPath { get {
+                return (this.Tracker!=null)? this.Tracker.SelectedPath : this.Name;
+            } }
         /// <summary>
         /// the selected trackTree of this tree, to which tree this tree points at
         /// </summary>
@@ -149,6 +151,8 @@ namespace MediaTracker
             // create the path
             this.FilePath = $"{parent}\\{name}";
             this.Name = name;
+            // initalize children list
+            this.Childrens = new List<TrackTree>();
             // if the path does not exists, throw exception
             if (!Directory.Exists(this.FilePath) && !File.Exists(this.FilePath))
                 throw new FileNotFoundException("File not found, can not create TrackTree");
@@ -163,8 +167,6 @@ namespace MediaTracker
         {
             // only directories have selected
             this.IsDirectory = true;
-            // initalize children list
-            this.Childrens = new List<TrackTree>(); 
             // if directory, initialize tracker
             this.Tracker = new TrackerList(this.FilePath, selected);
         }

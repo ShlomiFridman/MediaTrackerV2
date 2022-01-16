@@ -2,4 +2,4 @@
 
 developed by Shlomi Fridman
 
-A media library tracker software
+A media library tracking software

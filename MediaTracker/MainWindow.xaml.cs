@@ -292,8 +292,8 @@ namespace MediaTracker
             if (this.trackTree == null) return;
             // update minHeight value based on current state
             this.MinHeight += (this.randomExpander.IsExpanded)? 40:-40;
-            // if collapsed decrease height
-            if (!this.randomExpander.IsExpanded)
+            // if collapsed and was the minHeight decrease height
+            if (!this.randomExpander.IsExpanded && this.Height==this.MinHeight+40)
                 this.Height -= 40;
             // else check if the window is out of bounds
             else

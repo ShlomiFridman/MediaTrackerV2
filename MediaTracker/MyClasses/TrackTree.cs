@@ -361,8 +361,8 @@ namespace MediaTracker
                 writer.Flush();
                 writer.Close();
 
-                // if there are over 30 save files, delete the oldests
-                for (int i = 0; i < fiArray.Length - 30; i++)
+                // if there are over 120 save files, delete the oldests
+                for (int i = 0; i < fiArray.Length - 120; i++)
                     try
                     {
                         // tries to open file to use, if throws exception the file is in use and will not be deleted
@@ -552,9 +552,11 @@ namespace MediaTracker
                     reader.Close();
                     // return root
                     return rootTree;
-                } catch (Exception e)
+                } catch (Exception readerEx)
                 {
                     // an exception was thrown, cannot open save file or the file was corrupted
+                    // alert the user
+                    Utilties.errorMessage("TrackTree load error",$"Cannot load {fiArray[lastSaveFileInd].Name} file.\nMessage: {readerEx.Message}");
                     // closing the reader
                     reader.Close();
                     // moving the index to the previous save file

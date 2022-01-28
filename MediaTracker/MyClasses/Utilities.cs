@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Windows.Forms;
 
 namespace MediaTracker
 {
@@ -80,6 +81,11 @@ namespace MediaTracker
             return Encoding.Default.GetString(raw);
         }
         */
+
+        public static void errorMessage(string title, string content)
+        {
+            MessageBox.Show(title, content, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+        }
 
         #region get Files\Folders methods
 

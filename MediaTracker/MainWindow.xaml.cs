@@ -16,9 +16,9 @@ using System.Windows.Shapes;
 */
 using System.IO;
 using System.Diagnostics;
-using System.Windows.Forms;
 //using System.Timers;
 using System.Threading;
+using System.Windows.Forms;
 using Button = System.Windows.Controls.Button;
 
 namespace MediaTracker
@@ -28,7 +28,9 @@ namespace MediaTracker
     /// </summary>
     public partial class MainWindow : Window
     {
-        private bool autoAdvanceOnOpen;
+        public bool autoAdvanceOnOpen;
+
+        private AppSettings settings;
 
         private TreeViewItem[] savedItems;
 
@@ -46,24 +48,33 @@ namespace MediaTracker
             // check if there an already running instance of the app, if so will alert the user and kill current instance
             if (System.Diagnostics.Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location)).Count() > 1)
             {
-                System.Windows.Forms.MessageBox.Show("Error, the application is already running","Failed to launch", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                Utilties.errorMessage("Error, the application is already running","Failed to launch");
                 System.Diagnostics.Process.GetCurrentProcess().Kill();
             }
             InitializeComponent();
+            // load settings
+            this.settings = AppSettings.getInstance();
+            this.settings.loadSettings(this);
+            /*
             // load Left, Top, Width, Height, and Root
             this.Left = Properties.Settings.Default.Left;
             this.Top = Properties.Settings.Default.Top;
             this.Width = Properties.Settings.Default.Width;
             this.Height = Properties.Settings.Default.Height;
             string root = Properties.Settings.Default.Root;
+            */
+            /*
             // set the settings
             this.autoAdvanceSetting.IsChecked = Properties.Settings.Default.AutoAdvance;
             this.autoAdvanceOnOpen = Properties.Settings.Default.AutoAdvance;
             this.randomExpander.IsExpanded = Properties.Settings.Default.RandomExpanded;
+            */
             if (!this.randomExpander.IsExpanded)
                 this.MinHeight -= 40;
+            /*
             if (Directory.Exists(root))
                 this.setRoot(root);
+            */
         }
 
         #region event functions
@@ -77,6 +88,7 @@ namespace MediaTracker
         /// <param name="e"></param>
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            /*
             // saves the window position and size
             Properties.Settings.Default.Top = this.Top;
             Properties.Settings.Default.Left = this.Left;
@@ -88,8 +100,9 @@ namespace MediaTracker
             Properties.Settings.Default.RandomExpanded = this.randomExpander.IsExpanded;
 
             Properties.Settings.Default.Save();
-            // saves the tracker tree
-            saveTrackTree();
+            */
+            // saves
+            this.save();
         }
 
         /// <summary>
@@ -325,7 +338,7 @@ namespace MediaTracker
         private void checkOutOfBottomScreen()
         {
 
-            if (this.Top + this.Height >= SystemParameters.VirtualScreenHeight)
+            if (this.Top + this.Height >= SystemParameters.VirtualScreenHeight-30)
             {
                 this.Top = SystemParameters.VirtualScreenHeight + SystemParameters.VirtualScreenTop - this.Height - 35;
             }
@@ -441,8 +454,8 @@ namespace MediaTracker
                     this.selectedFile = this.selectedFile.Parent.getSelectedTree();
                     // set the textBox texts
                     this.updateText();
-                    // saves the updated trackTree, in case of an unexpected crash
-                    saveTrackTree();
+                    // saves, in case of an unexpected crash
+                    this.save();
                 }
             }
             catch (Exception exp)
@@ -523,7 +536,7 @@ namespace MediaTracker
         /// get the new root trackTree, if there isn't one it will be created and saved, and set the selected folder as the new root
         /// </summary>
         /// <param name="path">new root path</param>
-        private void setRoot(string path)
+        public void setRoot(string path)
         {
             new Thread(() =>
             {
@@ -546,7 +559,7 @@ namespace MediaTracker
                     } catch (DirectoryNotFoundException dirException)
                     {
                         // the root the user entered is invalid, alerting the user and ending the setRoot
-                        System.Windows.Forms.MessageBox.Show("Error, Invalid root", "The root is invalid", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        Utilties.errorMessage("Error, Invalid root", "The root is invalid");
                         return;
                     }
                     // check if the tree needs updating
@@ -743,8 +756,8 @@ namespace MediaTracker
                     this.savedItems = new TreeViewItem[this.TreeView.Items.Count];
                     this.TreeView.Items.CopyTo(savedItems, 0);
                 }
-                // saves the updated trackTree
-                saveTrackTree();
+                // saves
+                this.save();
                 // return true, the trees were updated
                 return true;
             }
@@ -761,6 +774,12 @@ namespace MediaTracker
         private bool moveTracker(TrackTree tree, int offset)
         {
             return tree.Tracker.move(offset);
+        }
+
+        private void save()
+        {
+            this.settings.save();
+            this.saveTrackTree();
         }
 
         /// <summary>

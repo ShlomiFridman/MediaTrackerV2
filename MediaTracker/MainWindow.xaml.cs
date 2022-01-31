@@ -28,7 +28,6 @@ namespace MediaTracker
     /// </summary>
     public partial class MainWindow : Window
     {
-        public bool autoAdvanceOnOpen;
 
         private AppSettings settings;
 
@@ -69,7 +68,7 @@ namespace MediaTracker
             this.autoAdvanceOnOpen = Properties.Settings.Default.AutoAdvance;
             this.randomExpander.IsExpanded = Properties.Settings.Default.RandomExpanded;
             */
-            if (!this.randomExpander.IsExpanded)
+            if (!this.settings.mainRandomExpanded)
                 this.MinHeight -= 40;
             /*
             if (Directory.Exists(root))
@@ -285,13 +284,21 @@ namespace MediaTracker
         }
 
         /// <summary>
-        /// set the autoAdvance flag, by the checkbox value
+        /// set the settings, by the checkbox value
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void autoAdvanceSetting_Checked(object sender, RoutedEventArgs e)
         {
-            this.autoAdvanceOnOpen = this.autoAdvanceSetting.IsChecked == true? true:false;
+            if (this.settings != null)
+               this.settings.mainAutoAdvance = this.autoAdvanceSetting.IsChecked == true? true:false;
+        }
+
+
+        private void OnOpenComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (this.settings != null)
+                this.settings.mainOnOpenFile = this.OnOpenComboBox.SelectedIndex;
         }
 
         /// <summary>
@@ -311,6 +318,9 @@ namespace MediaTracker
             // else check if the window is out of bounds
             else
                 checkOutOfBottomScreen();
+            // update the settings
+            if (this.settings != null)
+                this.settings.mainRandomExpanded = this.randomExpander.IsExpanded;
         }
 
         /// <summary>
@@ -322,13 +332,16 @@ namespace MediaTracker
         {
             var prevMinHeight = this.MinHeight;
             // update minHeight
-            this.MinHeight += (this.SettingsControl.IsExpanded == true)? 40 : -40;
+            this.MinHeight += (this.settingsExpander.IsExpanded == true)? 40 : -40;
             // check if the new window size is out of bottom screen
             if (this.MinHeight > prevMinHeight)
                 checkOutOfBottomScreen();
             // update actual height if already was at minHeight
             if (this.Height==prevMinHeight)
                 this.Height -= 40;
+            // update the settings
+            if (this.settings != null)
+                this.settings.mainSettingsExpander = this.settingsExpander.IsExpanded;
         }
 
         /// <summary>
@@ -501,25 +514,48 @@ namespace MediaTracker
                 // if the sender is the openFile button, open the file and advance tracker to next file (if autoAdvance is checked)
                 if (sender == this.OpenFileBtn)
                 {
-                    Process.Start("explorer.exe", selectedFile.FilePath);
-                    if (this.autoAdvanceOnOpen)
-                    {
-                        // advance to next file
-                        this.ButtonClick_ChangeFile(this.NextFileBtn, null);
-                    }
+                    openFile(selectedFile.FilePath, this.settings.mainAutoAdvance);
                 }
                 // else if it was the openFolder button, open the file's folder (parent tree path)
                 else if (sender == this.OpenFolderBtn)
                     Process.Start("explorer.exe", selectedFile.Parent.FilePath);
                 // else if it is openRandom, will open randomFile path
                 else if (this.randomFile != null && sender == this.OpenRandomBtn)
-                    Process.Start("explorer.exe", randomFile.FilePath);
+                    openFile(randomFile.FilePath, false);
             }
             catch (Exception exception)
             {
                 // if an exception was thrown, check if the tree is up to date
                 this.checkTrees(this.trackTree);
                 selectFolder(this.trackTree.SelectedPath);
+            }
+        }
+
+        /// <summary>
+        /// function to handle open file event, for tracker and random files
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="advanceTracker"></param>
+        private void openFile(string filePath, bool advanceTracker)
+        {
+            Process.Start("explorer.exe", filePath);
+            // advance tracker to next file
+            if (advanceTracker)
+            {
+                // advance to next file
+                this.ButtonClick_ChangeFile(this.NextFileBtn, null);
+            }
+            // handle onOpenFile setting
+            switch (this.settings.mainOnOpenFile)
+            {
+                case 0: break;
+                case 1:
+                    this.WindowState = WindowState.Minimized;
+                    break;
+                case 2:
+                    this.Window_Closing(null, null);
+                    System.Windows.Application.Current.Shutdown();
+                    break;
             }
         }
 
@@ -884,7 +920,7 @@ namespace MediaTracker
         {
             try
             {
-                Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
+                openFile(((TreeViewItem)sender).Tag.ToString(), false);
             }
             catch (Exception ex) { }
         }
@@ -896,15 +932,10 @@ namespace MediaTracker
         /// <param name="e"></param>
         private void onItemEnter(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            try
-            {
-                if (e.Key.Equals(Key.Enter))
-                    Process.Start("explorer.exe", ((TreeViewItem)sender).Tag.ToString());
-            }
-            catch (Exception ex) { }
+            if (e.Key.Equals(Key.Enter))
+                onItemDoubleClick(sender, null);
         }
 
         #endregion
-
     }
 }

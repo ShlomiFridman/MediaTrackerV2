@@ -41,9 +41,9 @@
     <Border Padding="2" Background="GhostWhite">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <!-- left side, root selection and text, treeView -->
             <Grid Grid.Column="0">
@@ -115,12 +115,13 @@
                 ResizeBehavior="PreviousAndNext"
                 Width="3"
                 x:Name="GridSplitter"
+                Background="LightSlateGray"
                 />
             <!-- user interface-->
             <StackPanel Name="mainUI" Grid.Column="2" Background="FloralWhite" Orientation="Vertical">
                 <!-- User settings (autoAdvance, showRandomSec) -->
                 <Expander
-                    x:Name="SettingsControl" Header="Settings"
+                    x:Name="settingsExpander" Header="Settings"
                     Expanded="SettingsControl_StateChange"
                     Collapsed="SettingsControl_StateChange"
                     >
@@ -147,10 +148,20 @@
                     </Grid>
                     -->
                     <StackPanel>
+                        <!-- autoAdvance on opening tracker file -->
                         <CheckBox x:Name="autoAdvanceSetting" Content="Auto Advance On Open File" Margin="2"
                                   Checked="autoAdvanceSetting_Checked"
                                   Unchecked="autoAdvanceSetting_Checked"
                                   />
+                        <!-- what to do after openning a file -->
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="5 2 5 0">On Opening File: </TextBlock>
+                            <ComboBox MinWidth="180" x:Name="OnOpenComboBox" SelectionChanged="OnOpenComboBox_SelectionChanged">
+                                <ComboBoxItem IsSelected="True" Content="Do nothing" Tag="0"/>
+                                <ComboBoxItem Content="Minimize window to tray" Tag="1"/>
+                                <ComboBoxItem Content="Close application" Tag="2"/>
+                            </ComboBox>
+                        </StackPanel>
                     </StackPanel>
                 </Expander>
                 <!-- selected folder -->

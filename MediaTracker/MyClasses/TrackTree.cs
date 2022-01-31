@@ -282,6 +282,47 @@ namespace MediaTracker
             return updateNeeded | (toAdd.Count>0 || toRemove.Count>0);
         }
 
+        /*
+         * 
+        /// <summary>
+        /// open this tree's file
+        /// </summary>
+        /// <returns>true if the file was opened</returns>
+        public bool open()
+        {
+            try
+            {
+                Process.Start("explorer.exe", FilePath);
+                return true;
+            }
+            catch (Exception openException)
+            {
+                throw openException;
+            }
+        }
+
+        /// <summary>
+        /// open this tree's directory, if this is the root, return false
+        /// </summary>
+        /// <returns>true if the directory was opened</returns>
+        public bool openParent()
+        {
+            // if the parent is null (this is the root), return false
+            if (this.Parent == null)
+                return false;
+            try
+            {
+                // call the parent open function
+                return this.Parent.open();
+            }
+            catch (Exception openException)
+            {
+                throw openException;
+            }
+        }
+        *
+        */
+
         #region get selected\random methods
 
         /// <summary>

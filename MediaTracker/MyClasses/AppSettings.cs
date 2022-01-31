@@ -26,7 +26,12 @@ namespace MediaTracker
             get {
                 return (bool) this.settings["mainAutoAdvance"];
             }
+            set
+            {
+                this.settings["mainAutoAdvance"] = (bool) value;
+            }
         }
+
         /// <summary>
         /// the setting for if the random file section should be visible
         /// </summary>
@@ -34,6 +39,42 @@ namespace MediaTracker
         {
             get{
                 return (bool) this.settings["mainRandomExpanded"];
+            }
+            set
+            {
+                this.settings["mainRandomExpanded"] = (bool) value;
+            }
+        }
+
+        /// <summary>
+        /// the setting for if the settings section should be visible
+        /// </summary>
+        public bool mainSettingsExpander
+        {
+            get
+            {
+                return (bool)this.settings["mainSettingsExpanded"];
+            }
+            set
+            {
+                this.settings["mainSettingsExpanded"] = (bool) value;
+            }
+        }
+
+        /// <summary>
+        /// the setting for what to do on opening a file
+        /// </summary>
+        public int mainOnOpenFile
+        {
+            get
+            {
+                return (int) this.settings["mainOnOpenFile"];
+            }
+            set
+            {
+                if (value < 0 || value > 2)
+                    throw new ArgumentException("The value can only be from 0 to 2");
+                this.settings["mainOnOpenFile"] = (int) value;
             }
         }
         #endregion
@@ -61,8 +102,12 @@ namespace MediaTracker
                 {"mainHeight",(double) 310 },
                 // autoadvance setting for the open track file func
                 {"mainAutoAdvance", (bool) true },
-                // flag to check if the settting were loaded successfully from file
+                // what to do after opening a file
+                {"mainOnOpenFile", (int) 0 },
+                // bool value if the random section is expanded
                 {"mainRandomExpanded", (bool) true },
+                // bool value if the setting section is expanded
+                {"mainSettingsExpanded", (bool) false },
                 // default root value
                 {"mainRoot", (string) "Root" },
             };
@@ -119,8 +164,9 @@ namespace MediaTracker
             mainWindow.Width = (double) this.settings["mainWidth"];
             mainWindow.Height = (double) this.settings["mainHeight"];
             mainWindow.autoAdvanceSetting.IsChecked = (bool) this.settings["mainAutoAdvance"];
-            mainWindow.autoAdvanceOnOpen = (bool) this.settings["mainAutoAdvance"];
+            mainWindow.OnOpenComboBox.SelectedIndex= (int) this.settings["mainOnOpenFile"];
             mainWindow.randomExpander.IsExpanded = (bool) this.settings["mainRandomExpanded"];
+            mainWindow.settingsExpander.IsExpanded = (bool) this.settings["mainSettingsExpanded"];
             if (!((string) this.settings["mainRoot"]).Equals("Root"))
                 mainWindow.setRoot((string)this.settings["mainRoot"]);
             // return true if the settings were from the save file, else return false (the default settings)
@@ -140,10 +186,8 @@ namespace MediaTracker
                 this.settings["mainLeft"] = (double)this.mainWindow.Left;
                 this.settings["mainTop"] = (double)this.mainWindow.Top;
                 this.settings["mainWidth"] = (double)this.mainWindow.Width;
-                this.settings["mainHeight"] = (double) ((this.mainWindow.SettingsControl.IsExpanded)? this.mainWindow.Height - 40 : this.mainWindow.Height);
-                this.settings["mainAutoAdvance"] = (bool) this.mainWindow.autoAdvanceSetting.IsChecked == true ? true : false;
-                this.settings["mainRandomExpanded"] = (bool) this.mainWindow.randomExpander.IsExpanded;
-                this.settings["mainRoot"] = (string) this.mainWindow.rootTextBox.Text;
+                this.settings["mainHeight"] = (double) this.mainWindow.Height;
+                this.settings["mainRoot"] = (string)this.mainWindow.rootTextBox.Text;
             }
             // initialize the json object of the settings
             string json = JsonConvert.SerializeObject(this.settings, Formatting.Indented);

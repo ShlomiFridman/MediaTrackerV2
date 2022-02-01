@@ -4,6 +4,7 @@ using System.Text;
 using System.IO;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using System.Windows;
 
 namespace MediaTracker
 {
@@ -110,7 +111,9 @@ namespace MediaTracker
                 {"mainSettingsExpanded", (bool) false },
                 // default root value
                 {"mainRoot", (string) "Root" },
-            };
+                // the positions of the grid
+                { "mainGridCols", new double[] {1.0, 1.0 } }
+        };
             // check if the save file exist
             if (File.Exists(saveFilePath))
             {
@@ -167,6 +170,8 @@ namespace MediaTracker
             mainWindow.OnOpenComboBox.SelectedIndex= (int) this.settings["mainOnOpenFile"];
             mainWindow.randomExpander.IsExpanded = (bool) this.settings["mainRandomExpanded"];
             mainWindow.settingsExpander.IsExpanded = (bool) this.settings["mainSettingsExpanded"];
+            mainWindow.treeCol.Width = new GridLength((double) this.settings["mainGridCols"][0], GridUnitType.Star);
+            mainWindow.trackerCol.Width = new GridLength((double) this.settings["mainGridCols"][1], GridUnitType.Star);
             if (!((string) this.settings["mainRoot"]).Equals("Root"))
                 mainWindow.setRoot((string)this.settings["mainRoot"]);
             // return true if the settings were from the save file, else return false (the default settings)
@@ -188,6 +193,8 @@ namespace MediaTracker
                 this.settings["mainWidth"] = (double)this.mainWindow.Width;
                 this.settings["mainHeight"] = (double) this.mainWindow.Height;
                 this.settings["mainRoot"] = (string)this.mainWindow.rootTextBox.Text;
+                this.settings["mainGridCols"][0] = (double)this.mainWindow.treeCol.Width.Value;
+                this.settings["mainGridCols"][1] = (double)this.mainWindow.trackerCol.Width.Value;
             }
             // initialize the json object of the settings
             string json = JsonConvert.SerializeObject(this.settings, Formatting.Indented);

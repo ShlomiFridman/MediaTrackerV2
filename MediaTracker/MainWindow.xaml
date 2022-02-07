@@ -9,7 +9,7 @@
         KeyDown="Window_KeyDown"
         Icon="pack://application:,,,/assets/images/icon.ico"
         mc:Ignorable="d"
-        Title="Media Tracker V2" MinHeight="340" MinWidth="600">
+        Title="Media Tracker V2" MinHeight="290" MinWidth="600">
 
     <!-- custom templates -->
     <Window.Resources>
@@ -200,7 +200,7 @@
                             Style="{StaticResource ControlBtn}"/>
                 </StackPanel>
                 <!-- Random File buttons -->
-                <Expander Header="Random File" x:Name="randomExpander" IsExpanded="True" Margin="0 5 0 0"
+                <Expander Header="Random File" x:Name="randomExpander" Margin="0 5 0 0"
                           Expanded="randomExpander_Toggled" Collapsed="randomExpander_Toggled">
                     <StackPanel>
                         <TextBox x:Name="RandomText" Style="{StaticResource infoInput}" Margin="10 4"

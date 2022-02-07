@@ -100,13 +100,13 @@ namespace MediaTracker
                 {"mainTop",(double) 50 },
                 // default size
                 {"mainWidth",(double) 600 },
-                {"mainHeight",(double) 310 },
+                {"mainHeight",(double) 290 },
                 // autoadvance setting for the open track file func
                 {"mainAutoAdvance", (bool) true },
                 // what to do after opening a file
                 {"mainOnOpenFile", (int) 0 },
                 // bool value if the random section is expanded
-                {"mainRandomExpanded", (bool) true },
+                {"mainRandomExpanded", (bool) false },
                 // bool value if the setting section is expanded
                 {"mainSettingsExpanded", (bool) false },
                 // default root value

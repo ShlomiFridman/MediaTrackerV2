@@ -68,8 +68,6 @@ namespace MediaTracker
             this.autoAdvanceOnOpen = Properties.Settings.Default.AutoAdvance;
             this.randomExpander.IsExpanded = Properties.Settings.Default.RandomExpanded;
             */
-            if (!this.settings.mainRandomExpanded)
-                this.MinHeight -= 40;
             /*
             if (Directory.Exists(root))
                 this.setRoot(root);
@@ -308,13 +306,13 @@ namespace MediaTracker
         /// <param name="e"></param>
         private void randomExpander_Toggled(object sender, RoutedEventArgs e)
         {
-            // if the tree wasn't initialized, then the function was called when the expended value was first set, no need to change the height
-            if (this.trackTree == null) return;
+            double prevMinHeight = this.MinHeight;
+            double heightDiff = 55;
             // update minHeight value based on current state
-            this.MinHeight += (this.randomExpander.IsExpanded)? 40:-40;
+            this.MinHeight += (this.randomExpander.IsExpanded)? heightDiff : -heightDiff;
             // if collapsed and was the minHeight decrease height
-            if (!this.randomExpander.IsExpanded && this.Height==this.MinHeight+40)
-                this.Height -= 40;
+            if (this.Height == prevMinHeight)
+                this.Height -= heightDiff;
             // else check if the window is out of bounds
             else
                 checkOutOfBottomScreen();
@@ -330,15 +328,16 @@ namespace MediaTracker
         /// <param name="e"></param>
         private void SettingsControl_StateChange(object sender, RoutedEventArgs e)
         {
-            var prevMinHeight = this.MinHeight;
+            double prevMinHeight = this.MinHeight;
+            double heightDiff = 60;
             // update minHeight
-            this.MinHeight += (this.settingsExpander.IsExpanded == true)? 40 : -40;
+            this.MinHeight += (this.settingsExpander.IsExpanded == true)? heightDiff : -heightDiff;
             // check if the new window size is out of bottom screen
             if (this.MinHeight > prevMinHeight)
                 checkOutOfBottomScreen();
             // update actual height if already was at minHeight
             if (this.Height==prevMinHeight)
-                this.Height -= 40;
+                this.Height -= heightDiff;
             // update the settings
             if (this.settings != null)
                 this.settings.mainSettingsExpander = this.settingsExpander.IsExpanded;

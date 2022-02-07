@@ -84,7 +84,7 @@ namespace MediaTracker
 
         public static void errorMessage(string title, string content)
         {
-            MessageBox.Show(title, content, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            MessageBox.Show(content, title, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
 
         #region get Files\Folders methods

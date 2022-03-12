@@ -28,7 +28,6 @@ namespace MediaTracker
     /// </summary>
     public partial class MainWindow : Window
     {
-
         private AppSettings settings;
 
         private TreeViewItem[] savedItems;
@@ -44,6 +43,7 @@ namespace MediaTracker
 
         public MainWindow()
         {
+
             // check if there an already running instance of the app, if so will alert the user and kill current instance
             if (System.Diagnostics.Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location)).Count() > 1)
             {
@@ -416,6 +416,8 @@ namespace MediaTracker
             }
             catch (Exception exp)
             {
+                // display error message to user
+                Utilties.errorMessage("Unable to change folder", exp.Message);
                 this.checkTrees(this.trackTree);
                 selectFolder(this.trackTree.SelectedPath);
             }
@@ -524,6 +526,8 @@ namespace MediaTracker
             }
             catch (Exception exception)
             {
+                // display error message to user
+                Utilties.errorMessage("Unable to open",exception.Message);
                 // if an exception was thrown, check if the tree is up to date
                 this.checkTrees(this.trackTree);
                 selectFolder(this.trackTree.SelectedPath);
@@ -537,7 +541,13 @@ namespace MediaTracker
         /// <param name="advanceTracker"></param>
         private void openFile(string filePath, bool advanceTracker)
         {
-            Process.Start("explorer.exe", filePath);
+            // init and start the openning process
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo(filePath)
+            {
+                UseShellExecute = true
+            };
+            process.Start();
             // advance tracker to next file
             if (advanceTracker)
             {

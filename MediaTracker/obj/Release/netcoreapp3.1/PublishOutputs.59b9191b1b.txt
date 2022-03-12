@@ -1,0 +1,6 @@
+F:\Folders\Series\MediaTrackerV2\MediaTracker.exe
+F:\Folders\Series\MediaTrackerV2\MediaTracker.dll
+F:\Folders\Series\MediaTrackerV2\MediaTracker.deps.json
+F:\Folders\Series\MediaTrackerV2\MediaTracker.runtimeconfig.json
+F:\Folders\Series\MediaTrackerV2\MediaTracker.pdb
+F:\Folders\Series\MediaTrackerV2\Newtonsoft.Json.dll

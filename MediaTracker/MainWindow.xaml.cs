@@ -36,10 +36,11 @@ namespace MediaTracker
         private TrackTree selectedFolder;
         private TrackTree selectedFile;
         private TrackTree randomFile;
-        private char keySearched;
-        private Queue<TreeViewItem> keyQueue;
+        private string shortcutSearchString;
+        private Queue<TreeViewItem> shortcutSearchQueue;
 
         private System.Timers.Timer searchTimer;
+        private DateTime shortcutSearchTime;
 
         public MainWindow()
         {
@@ -54,6 +55,8 @@ namespace MediaTracker
             // load settings
             this.settings = AppSettings.getInstance();
             this.settings.loadSettings(this);
+            // init shortcut search time
+            this.shortcutSearchTime = DateTime.Now;
             /*
             // load Left, Top, Width, Height, and Root
             this.Left = Properties.Settings.Default.Left;
@@ -103,47 +106,84 @@ namespace MediaTracker
         }
 
         /// <summary>
-        /// focus on the items (in root) that start with the same char pressed
+        /// focus on the items (in root) that start with the same char pressed, and narrow the search by each following char
+        /// similer to the search in windows files system
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void shortcutSearch(object sender, TextCompositionEventArgs e)
         {
             // if the search box is focues, do nothing
             if (this.searchTextBox.IsFocused)
                 return;
             // get typed char
-            char key;
-            Char.TryParse(e.Key.ToString(), out key);
+            string key = e.TextComposition.Text;
             TreeViewItem tvi;
+            // get current time
+            DateTime currentTime = DateTime.Now;
             // if a new key was typed, get all the items that start with the char
-            if (this.keySearched != key)
+            if (string.IsNullOrEmpty(this.shortcutSearchString) || (currentTime - this.shortcutSearchTime).TotalSeconds >= 1.5)
             {
-                this.keySearched = key;
+                this.shortcutSearchString = key;
                 // if the queue is null, initialize it
-                if (this.keyQueue == null)
-                    this.keyQueue = new Queue<TreeViewItem>();
+                if (this.shortcutSearchQueue == null)
+                    this.shortcutSearchQueue = new Queue<TreeViewItem>();
                 // else clear it
                 else
-                    this.keyQueue.Clear();
+                    this.shortcutSearchQueue.Clear();
                 // enqueue the items
                 foreach (var item in this.TreeView.Items)
                 {
                     tvi = (TreeViewItem)item;
-                    if (tvi.Header.ToString().ToLower()[0] == char.ToLower(this.keySearched))
-                        this.keyQueue.Enqueue(tvi);
+                    if (tvi.Header.ToString().ToLower()[0] == this.shortcutSearchString[0])
+                        this.shortcutSearchQueue.Enqueue(tvi);
                 }
             }
             // if the queue is empty, return
-            if (this.keyQueue==null || this.keyQueue.Count == 0)
+            if (this.shortcutSearchQueue==null || this.shortcutSearchQueue.Count == 0)
                 return;
-            // get the head
-            tvi = this.keyQueue.Dequeue();
-            // get focus on the head
-            tvi.Focus();
-            this.selectFolder(tvi.Tag.ToString());
-            // return head to tail
-            this.keyQueue.Enqueue(tvi);
+            // else if the search string is a char and the new key was the same as before, advance queue
+            else if (this.shortcutSearchString.Length == 1 && this.shortcutSearchString == key.ToLower())
+            {
+                // get the head
+                tvi = this.shortcutSearchQueue.Dequeue();
+                // get focus on the head
+                tvi.Focus();
+                // update selected folder
+                this.selectFolder(tvi.Tag.ToString());
+                // return head to tail
+                this.shortcutSearchQueue.Enqueue(tvi);
+            }
+            // else narrow the queue by the new string
+            else
+            {
+                this.shortcutSearchString += key.ToLower();
+                // add null to the queue for the loop
+                this.shortcutSearchQueue.Enqueue(null);
+                // loop through queue
+                while (true)
+                {
+                    // get the head
+                    var item = this.shortcutSearchQueue.Dequeue();
+                    // if its null, break loop
+                    if (item == null)
+                        break;
+                    // return to queue if its start with the string
+                    if (item.Header.ToString().ToLower().StartsWith(this.shortcutSearchString))
+                        this.shortcutSearchQueue.Enqueue(item);
+                }
+                // if the head isn't null, focus on it
+                if (this.shortcutSearchQueue.Count != 0 && this.shortcutSearchQueue.Peek() != null)
+                {
+                    this.shortcutSearchQueue.Peek().Focus();
+                    // update selected folder
+                    this.selectFolder(this.shortcutSearchQueue.Peek().Tag.ToString());
+                }
+            }
+            // update search time
+            this.shortcutSearchTime = currentTime;
+            // handled
+            e.Handled = true;
         }
 
         #endregion
@@ -643,7 +683,7 @@ namespace MediaTracker
                 // set the textBox texts
                 this.updateText();
                 // set focus to openFile button
-                this.OpenFileBtn.Focus();
+                //  this.OpenFileBtn.Focus();
 
                 // if not root, changed selected in parent
                 if (selectedFolder.FilePath != trackTree.FilePath)
@@ -946,5 +986,6 @@ namespace MediaTracker
         }
 
         #endregion
+
     }
 }

@@ -17,6 +17,6 @@ C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Debug\netcoreap
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Debug\netcoreapp3.1\MediaTracker.dll
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Debug\netcoreapp3.1\MediaTracker.pdb
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Debug\netcoreapp3.1\MediaTracker.genruntimeconfig.cache
-C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Debug\netcoreapp3.1\MediaTracker.csproj.AssemblyReference.cache
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\bin\Debug\netcoreapp3.1\Newtonsoft.Json.dll
 C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Debug\netcoreapp3.1\MediaTracker.csproj.CopyComplete
+C:\Users\Shlomi\Documents\GitHub\MediaTrackerV2\MediaTracker\obj\Debug\netcoreapp3.1\MediaTracker.csproj.AssemblyReference.cache

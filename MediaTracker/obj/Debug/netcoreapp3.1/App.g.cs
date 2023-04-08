@@ -63,6 +63,8 @@ namespace MediaTracker {
         [System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "5.0.8.0")]
         public static void Main() {
+            SplashScreen splashScreen = new SplashScreen("assets/images/splash.png");
+            splashScreen.Show(true);
             MediaTracker.App app = new MediaTracker.App();
             app.InitializeComponent();
             app.Run();

@@ -18,6 +18,7 @@
     <None Remove="assets\images\icon.ico" />
     <None Remove="assets\images\icon.png" />
     <None Remove="assets\images\notFound.png" />
+    <None Remove="assets\images\splash.jpg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +40,10 @@
     <Resource Include="assets\images\folder.png" />
     <Resource Include="assets\images\icon.ico" />
     <Resource Include="assets\images\notFound.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SplashScreen Include="assets\images\splash.jpg" />
   </ItemGroup>
 
   <ItemGroup>
